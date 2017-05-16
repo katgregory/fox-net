@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_integer("batch_size", 5, "")
 
 FLAGS = tf.app.flags.FLAGS
 
-def getDataParams():
+def get_data_params():
     return {
         "data_dir": FLAGS.data_dir,
         "num_images": FLAGS.num_images,
@@ -37,6 +37,24 @@ def getDataParams():
         "batch_size": FLAGS.batch_size
     }
 
+def initialize_model(session, model):
+    logging.info("Created model with fresh parameters.")
+    session.run(tf.global_variables_initializer())
+    logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
+    return model
+
+def run_model(train_dataset, eval_dataset, lr):
+    # Reset every time
+    tf.reset_default_graph()
+    tf.set_random_seed(1)
+
+    foxnet = FoxNet()
+    with tf.Session() as sess:
+        initialize_model(sess, foxnet)
+        epoch_number, train_accuracy, train_loss, error = foxnet.train(sess, train_dataset, FLAGS.batch_size)
+        test_accuracy, avg_test_loss = foxnet.evaluate_prediction(sess, eval_dataset, FLAGS.batch_size)
+        return (epoch_number, train_accuracy, train_loss, test_accuracy, avg_test_loss)
+
 def main(_):
     assert(FLAGS.validate or ((FLAGS.dev and not FLAGS.test) or (FLAGS.test and not FLAGS.dev))), "When not validating, must set exaclty one of --dev or --test flag to specify evaluation dataset."
 
@@ -45,12 +63,12 @@ def main(_):
 
     # Load the two pertinent datasets into train_dataset and eval_dataset
     if FLAGS.test:
-        train_dataset, eval_dataset = load_datasets('test', getDataParams())
+        train_dataset, eval_dataset = load_datasets('test', get_data_params())
     else:
-        train_dataset, eval_dataset = load_datasets('dev', getDataParams())
+        train_dataset, eval_dataset = load_datasets('dev', get_data_params())
 
     # Train model
-    # todo
+    run_model(train_dataset, eval_dataset, FLAGS.lr)
 
 if __name__ == "__main__":
     tf.app.run()
