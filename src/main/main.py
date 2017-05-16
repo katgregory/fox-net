@@ -15,7 +15,7 @@ tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
 tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "data", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("data_dir", "data/testdata", "data directory (default ./data)")
 
 FLAGS = tf.app.flags.FLAGS
 
