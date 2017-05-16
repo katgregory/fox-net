@@ -2,20 +2,25 @@ import argparse
 import numpy as np
 import tensorflow as tf
 
+from data import load_datasets
+
 # COMMAND LINE ARGUMENTS
 tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
 tf.app.flags.DEFINE_bool("validate", False, "")
-tf.app.flags.DEFINE_integer("num_train", 10000, "")
-tf.app.flags.DEFINE_integer("num_dev", 1000, "")
-tf.app.flags.DEFINE_integer("num_test", 1000, "")
+tf.app.flags.DEFINE_integer("num_images", -1, "")
+tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
+# tf.app.flags.DEFINE_integer("num_train", 10000, "")
+# tf.app.flags.DEFINE_integer("num_dev", 1000, "")
+# tf.app.flags.DEFINE_integer("num_test", 1000, "")
 
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
 tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "data/testdata", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("data_dir", "../../data/labeled_051517_2114/", "data directory (default ./data)")
+tf.app.flags.DEFINE_integer("batch_size", 5, "")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -26,11 +31,17 @@ def main(_):
     np.random.seed(244)
 
     # Load the two pertinent datasets into train_dataset and eval_dataset
-    train_dataset = load_dataset('train', FLAGS.num_train)
+    data_params = {
+        "data_dir": FLAGS.data_dir,
+        "num_images": FLAGS.num_images,
+        "eval_proportion": FLAGS.eval_proportion,
+        "image_size": 28,
+        "batch_size": FLAGS.batch_size
+    }
     if FLAGS.test:
-        eval_dataset = load_dataset('test', FLAGS.num_test)
+        train_dataset, eval_dataset = load_datasets('test', data_params)
     else:
-        eval_dataset = load_dataset('dev', FLAGS.num_dev)
+        train_dataset, eval_dataset = load_datasets('dev', data_params)
 
     # Train model
     # todo
