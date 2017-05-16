@@ -8,6 +8,7 @@ from scipy import ndimage
 from tqdm import *
 
 def load_datasets(tier, params):
+    print("##### LOADING DATA ########################################")
     # Matching group 1 is frame number, matching group 2 is action
     pattern = re.compile('(\d+)_(.*).png')
 
@@ -49,5 +50,18 @@ def load_datasets(tier, params):
     X_train, X_test, y_train, y_test = train_test_split(states, labels, test_size=params["eval_proportion"], random_state=42)
     print("Train count: " + str(len(X_train)) + ", Test count: " + str(len(X_test)))
 
-    # Return
+    # Convert from list to numpy array
+    X_train = np.stack(X_train)
+    X_test = np.stack(X_test)
+    y_train = np.stack(y_train)
+    y_test = np.stack(y_test)
+
+    # Print stats
+    print('Train data shape: ' + str(X_train.shape))
+    print('Train labels shape: ' + str(y_train.shape))
+    print('Test data shape: ' + str(X_test.shape))
+    print('Test labels shape: ' + str(y_test.shape))
+    print("##### DONE LOADING DATA ###################################")
+
+    # Returns
     return (X_train, y_train), (X_test, y_test)
