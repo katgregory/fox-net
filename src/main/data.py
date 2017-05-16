@@ -1,5 +1,6 @@
 # Parcel data into usable format
 
+import numpy as np
 import os
 import re
 from sklearn.model_selection import train_test_split
@@ -16,7 +17,7 @@ def load_datasets(tier, params):
     labels = []
     for filename in tqdm(os.listdir(params["data_dir"])):
         # Stop early if have enough images
-        if params["num_images"] != -1 and len(images) > params["num_images"]:
+        if params["num_images"] != -1 and len(images) >= params["num_images"]:
             break
 
         # Extract metadata
@@ -25,18 +26,28 @@ def load_datasets(tier, params):
         action = match.group(2)
 
         # Convert image and add to collection
+        # Shape of img is (480, 640, 3)
         img = ndimage.imread(params["data_dir"] + filename)
         if img is not None:
             images.append(img)
             labels.append(action)
-    print("Loaded", len(images), "images.")
+    print("Loaded " + str(len(images)) + " images.")
+
+    # Create states by adding a third dimension over n_frames frames
+    # Final state has shape (480, 640, 3, n_frames)
+    # We discard the first (n_frames - 1) frames
+    print("Creating states:")
+    n_frames = params["frames_per_state"]
+    states = []
+    for i in tqdm(xrange(len(images) - n_frames + 1)):
+        state = tuple(images[x][:, :, :, None] for x in xrange(i, i + n_frames))
+        states.append(np.concatenate(state, axis=3))
+    labels = labels[n_frames - 1:] # Also remove (n_frames - 1) labels
+    print("Created " + str(len(states)) + " states.")
 
     # Partition
-    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=params["eval_proportion"], random_state=42)
-    print("Train count: X:", len(X_train), "y:", len(y_train))
-    print("Test count: X:", len(X_test), "y:", len(y_test))
-
-    # TODO: A state consists of three consecutive frames
+    X_train, X_test, y_train, y_test = train_test_split(states, labels, test_size=params["eval_proportion"], random_state=42)
+    print("Train count: " + str(len(X_train)) + ", Test count: " + str(len(X_test)))
 
     # Return
     return (X_train, y_train), (X_test, y_test)
