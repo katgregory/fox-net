@@ -29,9 +29,9 @@ def load_datasets(tier, params):
         # Convert image and add to collection
         # Shape of img is (480, 640, 3)
         img = ndimage.imread(params["data_dir"] + filename)
-        if img is not None:
+        if img is not None and action in params["actions"]:
             images.append(img)
-            labels.append(action)
+            labels.append(params["actions"].index(action))
     print("Loaded " + str(len(images)) + " images.")
 
     # Create states by adding a third dimension over n_frames frames
@@ -59,7 +59,7 @@ def load_datasets(tier, params):
 
     # Print stats
     # Data: count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
-    # Labels: count (in train/test set) x 1
+    # Labels: count (in train/test set) x 1 (index of action in ACTIONS array)
     print('Train data shape: ' + str(X_train.shape))
     print('Train labels shape: ' + str(y_train.shape))
     print('Test data shape: ' + str(X_test.shape))
