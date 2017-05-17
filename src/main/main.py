@@ -28,8 +28,8 @@ tf.app.flags.DEFINE_integer("num_epochs", 1, "")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "data/labeled_051517_2114/", "data directory (default ./data)")
-tf.app.flags.DEFINE_integer("image_width", 640, "")
-tf.app.flags.DEFINE_integer("image_height", 480, "")
+tf.app.flags.DEFINE_integer("image_width", 64, "")
+tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 5, "")
 
@@ -74,6 +74,8 @@ def get_data_params():
     return {
         "data_dir": FLAGS.data_dir,
         "num_images": FLAGS.num_images,
+        "width": FLAGS.image_width,
+        "height": FLAGS.image_height,
         "multi_frame_state": FLAGS.multi_frame_state,
         "frames_per_state": FLAGS.frames_per_state,
         "actions": ACTIONS,

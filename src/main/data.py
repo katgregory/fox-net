@@ -5,6 +5,7 @@ import os
 import re
 from sklearn.model_selection import train_test_split
 from scipy import ndimage
+from scipy import misc
 from tqdm import *
 
 def load_datasets(tier, params):
@@ -27,15 +28,17 @@ def load_datasets(tier, params):
         action = match.group(2)
 
         # Convert image and add to collection
-        # Shape of img is (480, 640, 3)
+        # Shape of img is (480, 640, 3) --> (48, 64, 3) after resizing
         img = ndimage.imread(params["data_dir"] + filename)
+        img = misc.imresize(img, (params['height'], params['width']))
+
         if img is not None and action in params["actions"]:
             images.append(img)
             labels.append(params["actions"].index(action))
     print("Loaded " + str(len(images)) + " images.")
 
     # Create states by adding a third dimension over n_frames frames
-    # Final state has shape (480, 640, 3, n_frames)
+    # Final state has shape (48, 64, 3, n_frames)
     # We discard the first (n_frames - 1) frames
     if (params["multi_frame_state"]):
         print("Creating states:")
@@ -61,7 +64,7 @@ def load_datasets(tier, params):
     y_test = np.stack(y_test)
 
     # Print stats
-    # Data: count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) [x 3 (num frames) if multi_frame_state]
+    # Data: count (in train/test set) x 48 (height) x 68 (width) x 3 (channels) [x 3 (num frames) if multi_frame_state]
     # Labels: count (in train/test set) x 1 (index of action in ACTIONS array)
     print('Train data shape: ' + str(X_train.shape))
     print('Train labels shape: ' + str(y_train.shape))
