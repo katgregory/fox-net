@@ -23,8 +23,8 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 3, "")
-tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
-tf.app.flags.DEFINE_integer("num_epochs", 1, "")
+tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
+tf.app.flags.DEFINE_integer("num_epochs", 10, "")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "data/labeled_051517_2114/", "data directory (default ./data)")

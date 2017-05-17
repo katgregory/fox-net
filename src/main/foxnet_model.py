@@ -86,15 +86,12 @@ class FoxNetModel(object):
 
         iter_cnt = 0 # Counter for printing
         for e in range(epochs):
-            print("epoch " + str(e))
             # Keep track of losses and accuracy
             correct = 0
             losses = []
 
             # Make sure we iterate over the dataset once
             for i in range(int(math.ceil(Xd.shape[0] / batch_size))):
-                print("\tbatch " + str(i))
-
                 # Generate indicies for the batch
                 start_idx = (i * batch_size) % Xd.shape[0]
                 idx = train_indicies[start_idx : start_idx + batch_size]
@@ -118,20 +115,21 @@ class FoxNetModel(object):
                 # Print every now and then
                 if training_now and (iter_cnt % print_every) == 0:
                     print("Iteration {0}: with minibatch training loss = {1:.3g} and accuracy of {2:.2g}"\
-                          .format(iter_cnt, loss, np.sum(corr) / actual_batch_size))
+                          .format(iter_cnt, loss, np.sum(corr) * 1.0 / actual_batch_size))
                 iter_cnt += 1
 
-            total_correct = correct / Xd.shape[0]
+            total_correct = correct * 1.0 / Xd.shape[0]
             total_loss = np.sum(losses) / Xd.shape[0]
             print("Epoch {2}, Overall loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(total_loss, total_correct, e+1))
 
-            if plot_losses:
-                plt.plot(losses)
-                plt.grid(True)
-                plt.title('Epoch {} Loss'.format(e+1))
-                plt.xlabel('minibatch number')
-                plt.ylabel('minibatch loss')
-                plt.show()
+        # TODO: Fix plotting code
+        if plot_losses:
+            plt.plot(losses)
+            plt.grid(True)
+            plt.title('Epoch {} Loss'.format(e+1))
+            plt.xlabel('minibatch number')
+            plt.ylabel('minibatch loss')
+            plt.show()
 
         return total_loss, total_correct
