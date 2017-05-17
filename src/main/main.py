@@ -17,10 +17,13 @@ tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
 # tf.app.flags.DEFINE_integer("num_dev", 1000, "")
 # tf.app.flags.DEFINE_integer("num_test", 1000, "")
 
+# LAYER SIZES
+tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
+tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
+
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 3, "")
 tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
-tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_epochs", 1, "")
 
 # INFRASTRUCTURE
@@ -35,9 +38,8 @@ ACTIONS = ['a', 'f', 'i', 'j', 'k', 'l', 'n', 's', '<enter>']
 FLAGS = tf.app.flags.FLAGS
 
 def initialize_model(session, model):
-    logging.info("Created model with fresh parameters.")
     session.run(tf.global_variables_initializer())
-    logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
+    print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
     return model
 
 def run_model(train_dataset, eval_dataset, lr):
@@ -53,15 +55,20 @@ def run_model(train_dataset, eval_dataset, lr):
                 FLAGS.num_channels,
                 FLAGS.multi_frame_state,
                 FLAGS.frames_per_state,
-                ACTIONS
+                ACTIONS,
+                FLAGS.cnn_filter_size,
+                FLAGS.cnn_num_filters
             )
+
+    X_train, y_train = train_dataset
+    X_eval, y_eval = eval_dataset
 
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, y_out, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 100, True, True)
+        foxnet.run(sess, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 100, True, True)
         print('Validating...')
-        foxnet.run(sess, y_out, X_val, y_val, 1, FLAGS.batch_size)
+        foxnet.run(sess, X_eval, y_eval, 1, FLAGS.batch_size)
 
 def get_data_params():
     return {

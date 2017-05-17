@@ -1,6 +1,7 @@
 # Tensorflow model declarations
 
 from foxnet import FoxNet
+import math
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
@@ -15,10 +16,12 @@ class FoxNetModel(object):
                 lr,
                 height,
                 width,
-                channels,
+                n_channels,
                 multi_frame_state,
                 frames_per_state,
                 actions,
+                cnn_filter_size,
+                cnn_n_filters,
                 verbose = False):
 
         self.lr = lr
@@ -29,20 +32,20 @@ class FoxNetModel(object):
         # The first dim is None, and gets sets automatically based on batch size fed in
         # count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
         if (multi_frame_state):
-            X = ph(tf.float32, [None, height, width, channels, frames_per_state])
+            self.X = ph(tf.float32, [None, height, width, n_channels, frames_per_state])
         else:
-            X = ph(tf.float32, [None, height, width, channels])
-        y = ph(tf.int64, [None])
-        is_training = ph(tf.bool)
+            self.X = ph(tf.float32, [None, height, width, n_channels])
+        self.y = ph(tf.int64, [None])
+        self.is_training = ph(tf.bool)
 
         foxnet = FoxNet()
 
         # Build net
         if (model == "simple"): # Only works if !multi_frame_state
-            self.probs = foxnet.simple_cnn(X, y)
+            self.probs = foxnet.simple_cnn(self.X, self.y, height, width, n_channels, cnn_filter_size, cnn_n_filters, len(actions))
 
         # Define loss
-        total_loss = tf.losses.hinge_loss(tf.one_hot(y, len(actions)), logits=self.probs)
+        total_loss = tf.losses.hinge_loss(tf.one_hot(self.y, len(actions)), logits=self.probs)
         self.loss = tf.reduce_mean(total_loss)
 
         # Define optimizer
@@ -58,7 +61,9 @@ class FoxNetModel(object):
             training_now=False, plot_losses=False):
 
         # Have tensorflow compute accuracy
-        correct_prediction = tf.equal(tf.argmax(predict, 1), y)
+        print(self.probs.shape)
+        print(yd.shape)
+        correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         # Shuffle indicies
@@ -67,9 +72,9 @@ class FoxNetModel(object):
         
         # Setting up variables we want to compute (and optimizing)
         # If we have a training function, add that to things we compute
-        variables = [mean_loss, correct_prediction, accuracy]
+        variables = [self.loss, correct_prediction, accuracy]
         if training_now:
-            variables[-1] = self.training_step
+            variables[-1] = self.train_step
 
         iter_cnt = 0 # Counter for printing
         for e in range(epochs):
@@ -84,9 +89,9 @@ class FoxNetModel(object):
                 idx = train_indicies[start_idx : start_idx + batch_size]
 
                 # Create a feed dictionary for this batch
-                feed_dict = { X: Xd[idx,:],
-                              y: yd[idx],
-                              is_training: training_now }
+                feed_dict = { self.X: Xd[idx,:],
+                              self.y: yd[idx],
+                              self.is_training: training_now }
 
                 # Get actual batch size
                 actual_batch_size = yd[idx].shape[0]
