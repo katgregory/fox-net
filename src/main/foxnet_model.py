@@ -67,9 +67,10 @@ class FoxNetModel(object):
             training_now=False, plot_losses=False):
 
         # Have tensorflow compute accuracy
-        # TODO BUG: Seems to compare arrs of size (batch_size,) and (total_size,)
+        # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
         correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        batch_size = yd.shape[0] # TODO: Add back batch sizes
 
         # Shuffle indicies
         train_indicies = np.arange(Xd.shape[0])
