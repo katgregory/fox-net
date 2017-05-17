@@ -51,6 +51,7 @@ def load_datasets(tier, params):
     print("Train count: " + str(len(X_train)) + ", Test count: " + str(len(X_test)))
 
     # Convert from list to numpy array
+    print("Stacking...")
     X_train = np.stack(X_train)
     X_test = np.stack(X_test)
     y_train = np.stack(y_train)
