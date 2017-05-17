@@ -52,7 +52,7 @@ def get_keys():
 
 
 def save_frame(frame, keys, frame_num):
-	filename = str(frame_num) + '_' + str(keys) + '.png'
+	filename = 'i=' + str(frame_num) + '_a=' + str(keys) + '.png'
 	cv2.imwrite('./' + filename, frame)
 
 

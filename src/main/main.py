@@ -10,41 +10,36 @@ tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
 tf.app.flags.DEFINE_string("model", "simple", "")
 tf.app.flags.DEFINE_bool("validate", False, "")
+tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
 # tf.app.flags.DEFINE_integer("num_train", 10000, "")
 # tf.app.flags.DEFINE_integer("num_dev", 1000, "")
 # tf.app.flags.DEFINE_integer("num_test", 1000, "")
 
+# LAYER SIZES
+tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
+tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
+
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 3, "")
 tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
-tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_epochs", 1, "")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "../../data/", "data directory (default ./data)")
-tf.app.flags.DEFINE_integer("image_width", 640, "")
-tf.app.flags.DEFINE_integer("image_height", 480, "")
+tf.app.flags.DEFINE_string("data_dir", "data/", "data directory (default ./data)")
+tf.app.flags.DEFINE_integer("image_width", 64, "")
+tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
-tf.app.flags.DEFINE_integer("num_actions", 7, "")
-tf.app.flags.DEFINE_integer("batch_size", 5, "")
+tf.app.flags.DEFINE_integer("batch_size", 20, "")
+
+ACTIONS = ['a', 'f', 'i', 'j', 'k', 'l', 'n', 's', '<enter>']
 
 FLAGS = tf.app.flags.FLAGS
 
-def get_data_params():
-    return {
-        "data_dir": FLAGS.data_dir,
-        "num_images": FLAGS.num_images,
-        "frames_per_state": FLAGS.frames_per_state,
-        "eval_proportion": FLAGS.eval_proportion,
-        "image_size": 28,
-        "batch_size": FLAGS.batch_size
-    }
-
 def initialize_model(session, model):
-    logging.info("Created model with fresh parameters.")
     session.run(tf.global_variables_initializer())
-    logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
+    print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
     return model
 
 def run_model(train_dataset, eval_dataset, lr):
@@ -58,15 +53,35 @@ def run_model(train_dataset, eval_dataset, lr):
                 FLAGS.image_height,
                 FLAGS.image_width,
                 FLAGS.num_channels,
+                FLAGS.multi_frame_state,
                 FLAGS.frames_per_state,
-                FLAGS.num_actions
+                ACTIONS,
+                FLAGS.cnn_filter_size,
+                FLAGS.cnn_num_filters
             )
+
+    X_train, y_train = train_dataset
+    X_eval, y_eval = eval_dataset
 
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
-        # epoch_number, train_accuracy, train_loss, error = foxnet.train(sess, train_dataset, FLAGS.batch_size)
-        # test_accuracy, avg_test_loss = foxnet.evaluate_prediction(sess, eval_dataset, FLAGS.batch_size)
-        # return (epoch_number, train_accuracy, train_loss, test_accuracy, avg_test_loss)
+        print('Training...')
+        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, FLAGS.num_epochs, 1, True, True)
+        # print('Validating...')
+        # foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, 1)
+
+def get_data_params():
+    return {
+        "data_dir": FLAGS.data_dir,
+        "num_images": FLAGS.num_images,
+        "width": FLAGS.image_width,
+        "height": FLAGS.image_height,
+        "multi_frame_state": FLAGS.multi_frame_state,
+        "frames_per_state": FLAGS.frames_per_state,
+        "actions": ACTIONS,
+        "eval_proportion": FLAGS.eval_proportion,
+        "image_size": 28,
+    }
 
 def main(_):
     # TODO: Eventually, should have separate dev and test datasets and require that we specify which we want to use.
