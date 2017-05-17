@@ -13,9 +13,6 @@ tf.app.flags.DEFINE_bool("validate", False, "")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
-# tf.app.flags.DEFINE_integer("num_train", 10000, "")
-# tf.app.flags.DEFINE_integer("num_dev", 1000, "")
-# tf.app.flags.DEFINE_integer("num_test", 1000, "")
 
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -33,7 +30,7 @@ tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
-ACTIONS = ['a', 'f', 'i', 'j', 'k', 'l', 'n', 's', '<enter>']
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n'}
 
 FLAGS = tf.app.flags.FLAGS
 
