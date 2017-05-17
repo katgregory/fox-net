@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_epochs", 1, "")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "../../data/labeled_051517_2114/", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("data_dir", "data/labeled_051517_2114/", "data directory (default ./data)")
 tf.app.flags.DEFINE_integer("image_width", 640, "")
 tf.app.flags.DEFINE_integer("image_height", 480, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")

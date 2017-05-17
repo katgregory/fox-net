@@ -1,8 +1,0 @@
-To run:
-
-python main.py --[dev,test]
-
-Other optional arguments include:
---num_images ##
---eval_proportion ##
---data_dir "datadir/name"
