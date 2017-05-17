@@ -41,7 +41,7 @@ def load_datasets(tier, params):
     n_frames = params["frames_per_state"]
     states = []
     for i in tqdm(xrange(len(images) - n_frames + 1)):
-        state = tuple(images[x][:, :, :, None] for x in xrange(i, i + n_frames))
+        state = tuple(images[x][:, :, :, None] for x in xrange(i, i + n_frames - 1))
         states.append(np.concatenate(state, axis=3))
     labels = labels[n_frames - 1:] # Also remove (n_frames - 1) labels
     print("Created " + str(len(states)) + " states.")
@@ -57,6 +57,8 @@ def load_datasets(tier, params):
     y_test = np.stack(y_test)
 
     # Print stats
+    # Data: count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
+    # Labels: count (in train/test set) x 1
     print('Train data shape: ' + str(X_train.shape))
     print('Train labels shape: ' + str(y_train.shape))
     print('Test data shape: ' + str(X_test.shape))
