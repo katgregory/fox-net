@@ -11,6 +11,11 @@ import matplotlib.pyplot as plt
 ph = tf.placeholder
 
 class FoxNetModel(object):
+
+    ############################
+    # SET UP GRAPH
+    #############################
+
     def __init__(self,
                 model,
                 lr,
@@ -46,29 +51,30 @@ class FoxNetModel(object):
 
         # Define loss
         onehot_labels = tf.one_hot(self.y, len(actions))
-        total_loss = tf.losses.softmax_cross_entropy(onehot_labels,logits=self.probs)
+        total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.probs)
         self.loss = tf.reduce_mean(total_loss)
 
         # Define optimizer
-        optimizer = tf.train.AdamOptimizer(lr) # select optimizer and set learning rate
+        optimizer = tf.train.AdamOptimizer(lr) # Select optimizer and set learning rate
         self.train_step = optimizer.minimize(self.loss)
 
     #############################
-    # TRAINING
+    # RUN GRAPH
     #############################
 
     def run(self, session, Xd, yd,
-            epochs=1, batch_size=20, print_every=100,
+            batch_size, epochs=1, print_every=100,
             training_now=False, plot_losses=False):
 
         # Have tensorflow compute accuracy
+        # TODO BUG: Seems to compare arrs of size (batch_size,) and (total_size,)
         correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         # Shuffle indicies
         train_indicies = np.arange(Xd.shape[0])
         np.random.shuffle(train_indicies)
-        
+
         # Setting up variables we want to compute (and optimizing)
         # If we have a training function, add that to things we compute
         variables = [self.loss, correct_prediction, accuracy]

@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_string("data_dir", "data/labeled_051517_2114/", "data direct
 tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
-tf.app.flags.DEFINE_integer("batch_size", 5, "")
+tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
 ACTIONS = ['a', 'f', 'i', 'j', 'k', 'l', 'n', 's', '<enter>']
 
@@ -66,9 +66,9 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 1, True, True)
+        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, FLAGS.num_epochs, 1, True, True)
         # print('Validating...')
-        # foxnet.run(sess, X_eval, y_eval, 1, FLAGS.batch_size)
+        # foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, 1)
 
 def get_data_params():
     return {

@@ -45,11 +45,11 @@ class FoxNet(object):
             training=is_training
         )
 
-        # Max pooling
+        # Max pooling --> 24x32x32
         pool = tf.layers.max_pooling2d(inputs=norm2, pool_size=[2, 2], strides=2)
 
-        # Affine + ReLU
-        magic_number = 524288 / 64 * 300 # TODO: This works - but I don't know why.
+        # # Affine + ReLU
+        magic_number = 24576 # TODO: What should this number be?
         pool_flat = tf.reshape(pool, [-1, magic_number]) 
         affine_relu = tf.layers.dense(inputs=pool_flat, units=1024, activation=tf.nn.relu)
 
