@@ -29,22 +29,25 @@ def load_datasets(tier, params):
         # Convert image and add to collection
         # Shape of img is (480, 640, 3)
         img = ndimage.imread(params["data_dir"] + filename)
-        if img is not None:
+        if img is not None and action in params["actions"]:
             images.append(img)
-            labels.append(action)
+            labels.append(params["actions"].index(action))
     print("Loaded " + str(len(images)) + " images.")
 
     # Create states by adding a third dimension over n_frames frames
     # Final state has shape (480, 640, 3, n_frames)
     # We discard the first (n_frames - 1) frames
-    print("Creating states:")
-    n_frames = params["frames_per_state"]
-    states = []
-    for i in tqdm(xrange(len(images) - n_frames + 1)):
-        state = tuple(images[x][:, :, :, None] for x in xrange(i, i + n_frames - 1))
-        states.append(np.concatenate(state, axis=3))
-    labels = labels[n_frames - 1:] # Also remove (n_frames - 1) labels
-    print("Created " + str(len(states)) + " states.")
+    if (params["multi_frame_state"]):
+        print("Creating states:")
+        n_frames = params["frames_per_state"]
+        states = []
+        for i in tqdm(xrange(len(images) - n_frames + 1)):
+            state = tuple(images[x][:, :, :, None] for x in xrange(i, i + n_frames - 1))
+            states.append(np.concatenate(state, axis=3))
+        labels = labels[n_frames - 1:] # Also remove (n_frames - 1) labels
+        print("Created " + str(len(states)) + " states.")
+    else: # Final state has shape (480, 640, 3)
+        states = images
 
     # Partition
     X_train, X_test, y_train, y_test = train_test_split(states, labels, test_size=params["eval_proportion"], random_state=42)
@@ -58,8 +61,8 @@ def load_datasets(tier, params):
     y_test = np.stack(y_test)
 
     # Print stats
-    # Data: count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
-    # Labels: count (in train/test set) x 1
+    # Data: count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) [x 3 (num frames) if multi_frame_state]
+    # Labels: count (in train/test set) x 1 (index of action in ACTIONS array)
     print('Train data shape: ' + str(X_train.shape))
     print('Train labels shape: ' + str(y_train.shape))
     print('Test data shape: ' + str(X_test.shape))
