@@ -1,5 +1,6 @@
-This script extracts the score from each frame (displayed at the top left). If -o is specified, a new copy of each
-frame is saved in the provided output directory. If -o is not specified, the original input images are renamed.
+This script extracts the score from each frame (displayed at the top left) and appends it to the filename. If
+--output_dir is specified, a new copy of each frame is saved in the provided output directory. If --output_dir is not
+specified, the original input images are renamed.
 
 /usr/bin/python2.7 /home/josh/grade_17/cs231n/fox-net/src/reward/knn_extract_reward.py \
     --template_dir=/home/josh/grade_17/cs231n/fox-net/data/reward/templates/* \
