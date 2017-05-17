@@ -20,9 +20,10 @@ tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
 tf.app.flags.DEFINE_integer("frames_per_state", 3, "")
 tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
 tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_epochs", 1, "")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "../../data/", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("data_dir", "../../data/labeled_051517_2114/", "data directory (default ./data)")
 tf.app.flags.DEFINE_integer("image_width", 640, "")
 tf.app.flags.DEFINE_integer("image_height", 480, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
@@ -38,7 +39,6 @@ def get_data_params():
         "frames_per_state": FLAGS.frames_per_state,
         "eval_proportion": FLAGS.eval_proportion,
         "image_size": 28,
-        "batch_size": FLAGS.batch_size
     }
 
 def initialize_model(session, model):
@@ -64,9 +64,10 @@ def run_model(train_dataset, eval_dataset, lr):
 
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
-        # epoch_number, train_accuracy, train_loss, error = foxnet.train(sess, train_dataset, FLAGS.batch_size)
-        # test_accuracy, avg_test_loss = foxnet.evaluate_prediction(sess, eval_dataset, FLAGS.batch_size)
-        # return (epoch_number, train_accuracy, train_loss, test_accuracy, avg_test_loss)
+        print('Training...')
+        foxnet.run(sess, y_out, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 100, True, True)
+        print('Validating...')
+        foxnet.run(sess, y_out, X_val, y_val, 1, FLAGS.batch_size)
 
 def main(_):
     # TODO: Eventually, should have separate dev and test datasets and require that we specify which we want to use.
