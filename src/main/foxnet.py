@@ -5,6 +5,18 @@ xavier = tf.contrib.layers.xavier_initializer
 
 class FoxNet(object):
 
+    def fully_connected(self, X, y, n_labels):
+        # Flatten: 48 x 64 x 3
+        flattened_size = 48 * 64 * 3
+        flattened = tf.reshape(X, [-1, flattened_size])
+
+        # Fully connected layer
+        affine_relu = tf.layers.dense(inputs=flattened, units=1024, activation=tf.nn.relu)
+
+        # Logits Layer
+        y_out = tf.layers.dense(inputs=affine_relu, units=n_labels)
+        return y_out
+
     def simple_cnn(self, X, y, filter_size, n_filters, n_labels, is_training):
         # Input Layer [batch_size, image_width, image_height, channels]
         input_layer = X

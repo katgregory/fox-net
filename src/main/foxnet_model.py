@@ -46,7 +46,9 @@ class FoxNetModel(object):
         foxnet = FoxNet()
 
         # Build net
-        if (model == "simple"): # Only works if !multi_frame_state
+        if (model == "fc"): # Only works if !multi_frame_state
+            self.probs = foxnet.fully_connected(self.X, self.y, len(actions))
+        elif (model == "simple_cnn"): # Only works if !multi_frame_state
             self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, len(actions), self.is_training)
 
         # Define loss
@@ -67,9 +69,10 @@ class FoxNetModel(object):
             training_now=False, plot_losses=False):
 
         # Have tensorflow compute accuracy
-        # TODO BUG: Seems to compare arrs of size (batch_size,) and (total_size,)
+        # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
         correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        batch_size = yd.shape[0] # TODO: Add back batch sizes
 
         # Shuffle indicies
         train_indicies = np.arange(Xd.shape[0])
@@ -83,15 +86,12 @@ class FoxNetModel(object):
 
         iter_cnt = 0 # Counter for printing
         for e in range(epochs):
-            print("epoch " + str(e))
             # Keep track of losses and accuracy
             correct = 0
             losses = []
 
             # Make sure we iterate over the dataset once
             for i in range(int(math.ceil(Xd.shape[0] / batch_size))):
-                print("\tbatch " + str(i))
-
                 # Generate indicies for the batch
                 start_idx = (i * batch_size) % Xd.shape[0]
                 idx = train_indicies[start_idx : start_idx + batch_size]
@@ -115,20 +115,21 @@ class FoxNetModel(object):
                 # Print every now and then
                 if training_now and (iter_cnt % print_every) == 0:
                     print("Iteration {0}: with minibatch training loss = {1:.3g} and accuracy of {2:.2g}"\
-                          .format(iter_cnt, loss, np.sum(corr) / actual_batch_size))
+                          .format(iter_cnt, loss, np.sum(corr) * 1.0 / actual_batch_size))
                 iter_cnt += 1
 
-            total_correct = correct / Xd.shape[0]
+            total_correct = correct * 1.0 / Xd.shape[0]
             total_loss = np.sum(losses) / Xd.shape[0]
             print("Epoch {2}, Overall loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(total_loss, total_correct, e+1))
 
-            if plot_losses:
-                plt.plot(losses)
-                plt.grid(True)
-                plt.title('Epoch {} Loss'.format(e+1))
-                plt.xlabel('minibatch number')
-                plt.ylabel('minibatch loss')
-                plt.show()
+        # TODO: Fix plotting code
+        if plot_losses:
+            plt.plot(losses)
+            plt.grid(True)
+            plt.title('Epoch {} Loss'.format(e+1))
+            plt.xlabel('minibatch number')
+            plt.ylabel('minibatch loss')
+            plt.show()
 
         return total_loss, total_correct

@@ -8,7 +8,7 @@ from foxnet_model import FoxNetModel
 # COMMAND LINE ARGUMENTS
 tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
-tf.app.flags.DEFINE_string("model", "simple", "")
+tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn") 
 tf.app.flags.DEFINE_bool("validate", False, "")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
@@ -23,8 +23,8 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 3, "")
-tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
-tf.app.flags.DEFINE_integer("num_epochs", 1, "")
+tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
+tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "data/", "data directory (default ./data)")
