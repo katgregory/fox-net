@@ -22,11 +22,11 @@ tf.app.flags.DEFINE_float("lr", 0.0004, "Learning rate.")
 tf.app.flags.DEFINE_integer("cnn_hidden_size", 300, "Size of each model layer.")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "../../data/labeled_051517_2114/", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("data_dir", "../../data/", "data directory (default ./data)")
 tf.app.flags.DEFINE_integer("image_width", 640, "")
 tf.app.flags.DEFINE_integer("image_height", 480, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
-tf.app.flags.DEFINE_integer("num_actions", 6, "")
+tf.app.flags.DEFINE_integer("num_actions", 7, "")
 tf.app.flags.DEFINE_integer("batch_size", 5, "")
 
 FLAGS = tf.app.flags.FLAGS
@@ -69,7 +69,8 @@ def run_model(train_dataset, eval_dataset, lr):
         # return (epoch_number, train_accuracy, train_loss, test_accuracy, avg_test_loss)
 
 def main(_):
-    assert(FLAGS.validate or ((FLAGS.dev and not FLAGS.test) or (FLAGS.test and not FLAGS.dev))), "When not validating, must set exaclty one of --dev or --test flag to specify evaluation dataset."
+    # TODO: Eventually, should have separate dev and test datasets and require that we specify which we want to use.
+    # assert(FLAGS.validate or ((FLAGS.dev and not FLAGS.test) or (FLAGS.test and not FLAGS.dev))), "When not validating, must set exaclty one of --dev or --test flag to specify evaluation dataset."
 
     # Set random seed
     np.random.seed(244)

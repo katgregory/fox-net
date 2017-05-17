@@ -21,6 +21,7 @@ class FoxNet(object):
         b1 = tf.get_variable("b1", shape=[10])
 
         # Define our graph
+        # TODO use 3d convolutions
         a1 = tf.nn.conv2d(X, Wconv1, strides=[1,2,2,1], padding='VALID') + bconv1
         h1 = tf.nn.relu(a1)
         h1_flat = tf.reshape(h1,[-1,5408])
