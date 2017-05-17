@@ -24,7 +24,7 @@ tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "data/", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("data_dir", "../../data/", "data directory (default ../../data)")
 tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
