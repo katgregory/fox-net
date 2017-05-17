@@ -80,7 +80,7 @@ def classify_digit_inner_product(input_digit, template_mat):
 
 def classify_digit_pearson(input_digit, template_mat):
     pearson_correlations = [pearsonr(input_digit, template_mat[:, index].flatten())[0] for index in
-                      range(template_mat.shape[1])]
+                            range(template_mat.shape[1])]
     max_pearson_correlation = np.max(pearson_correlations)
     if max_pearson_correlation < 0.5 or math.isnan(max_pearson_correlation):
         return None
