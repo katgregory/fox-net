@@ -16,22 +16,26 @@ def load_datasets(tier, params):
     print("Loading images:")
     images = []
     labels = []
-    for filename in tqdm(os.listdir(params["data_dir"])):
-        # Stop early if have enough images
-        if params["num_images"] != -1 and len(images) >= params["num_images"]:
-            break
 
-        # Extract metadata
-        match = re.search(pattern, filename)
-        frame_number = match.group(1)
-        action = match.group(2)
 
-        # Convert image and add to collection
-        # Shape of img is (480, 640, 3)
-        img = ndimage.imread(params["data_dir"] + filename)
-        if img is not None:
-            images.append(img)
-            labels.append(action)
+    for dirname in tqdm(os.listdir(params["data_dir"])):
+    	for filename in tqdm(os.listdir(params["data_dir"] + '/' + dirname)):
+	        # Stop early if have enough images
+	        if params["num_images"] != -1 and len(images) >= params["num_images"]:
+	            break
+
+	        # Extract metadata
+	        match = re.search(pattern, filename)
+	        frame_number = match.group(1)
+	        action = match.group(2)
+
+	        # Convert image and add to collection
+	        # Shape of img is (480, 640, 3)
+
+	        img = ndimage.imread(params["data_dir"] + dirname + '/' + filename)
+	        if img is not None:
+	            images.append(img)
+	            labels.append(action)
     print("Loaded " + str(len(images)) + " images.")
 
     # Create states by adding a third dimension over n_frames frames
