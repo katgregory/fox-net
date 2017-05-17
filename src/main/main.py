@@ -10,6 +10,7 @@ tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
 tf.app.flags.DEFINE_string("model", "simple", "")
 tf.app.flags.DEFINE_bool("validate", False, "")
+tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", -1, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
 # tf.app.flags.DEFINE_integer("num_train", 10000, "")
@@ -50,6 +51,7 @@ def run_model(train_dataset, eval_dataset, lr):
                 FLAGS.image_height,
                 FLAGS.image_width,
                 FLAGS.num_channels,
+                FLAGS.multi_frame_state,
                 FLAGS.frames_per_state,
                 ACTIONS
             )
@@ -65,6 +67,7 @@ def get_data_params():
     return {
         "data_dir": FLAGS.data_dir,
         "num_images": FLAGS.num_images,
+        "multi_frame_state": FLAGS.multi_frame_state,
         "frames_per_state": FLAGS.frames_per_state,
         "actions": ACTIONS,
         "eval_proportion": FLAGS.eval_proportion,

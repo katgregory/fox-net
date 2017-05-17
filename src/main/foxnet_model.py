@@ -16,6 +16,7 @@ class FoxNetModel(object):
                 height,
                 width,
                 channels,
+                multi_frame_state,
                 frames_per_state,
                 actions,
                 verbose = False):
@@ -27,14 +28,17 @@ class FoxNetModel(object):
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
         # count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
-        X = ph(tf.float32, [None, height, width, channels, frames_per_state])
+        if (multi_frame_state):
+            X = ph(tf.float32, [None, height, width, channels, frames_per_state])
+        else:
+            X = ph(tf.float32, [None, height, width, channels])
         y = ph(tf.int64, [None])
         is_training = ph(tf.bool)
 
         foxnet = FoxNet()
 
         # Build net
-        if (model == "simple"):
+        if (model == "simple"): # Only works if !multi_frame_state
             self.probs = foxnet.simple_cnn(X, y)
 
         # Define loss
@@ -53,8 +57,6 @@ class FoxNetModel(object):
             epochs=1, batch_size=20, print_every=100,
             training_now=False, plot_losses=False):
 
-        # TODO: y should go from a list of action keys to indexes in some action array
-
         # Have tensorflow compute accuracy
         correct_prediction = tf.equal(tf.argmax(predict, 1), y)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -69,8 +71,7 @@ class FoxNetModel(object):
         if training_now:
             variables[-1] = self.training_step
 
-        # Counter
-        iter_cnt = 0
+        iter_cnt = 0 # Counter for printing
         for e in range(epochs):
             # Keep track of losses and accuracy
             correct = 0
