@@ -66,9 +66,9 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 100, True, True)
-        print('Validating...')
-        foxnet.run(sess, X_eval, y_eval, 1, FLAGS.batch_size)
+        foxnet.run(sess, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 1, True, True)
+        # print('Validating...')
+        # foxnet.run(sess, X_eval, y_eval, 1, FLAGS.batch_size)
 
 def get_data_params():
     return {

@@ -42,10 +42,11 @@ class FoxNetModel(object):
 
         # Build net
         if (model == "simple"): # Only works if !multi_frame_state
-            self.probs = foxnet.simple_cnn(self.X, self.y, height, width, n_channels, cnn_filter_size, cnn_n_filters, len(actions))
+            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, len(actions), self.is_training)
 
         # Define loss
-        total_loss = tf.losses.hinge_loss(tf.one_hot(self.y, len(actions)), logits=self.probs)
+        onehot_labels = tf.one_hot(self.y, len(actions))
+        total_loss = tf.losses.softmax_cross_entropy(onehot_labels,logits=self.probs)
         self.loss = tf.reduce_mean(total_loss)
 
         # Define optimizer
@@ -61,8 +62,6 @@ class FoxNetModel(object):
             training_now=False, plot_losses=False):
 
         # Have tensorflow compute accuracy
-        print(self.probs.shape)
-        print(yd.shape)
         correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -78,12 +77,15 @@ class FoxNetModel(object):
 
         iter_cnt = 0 # Counter for printing
         for e in range(epochs):
+            print("epoch " + str(e))
             # Keep track of losses and accuracy
             correct = 0
             losses = []
 
             # Make sure we iterate over the dataset once
             for i in range(int(math.ceil(Xd.shape[0] / batch_size))):
+                print("\tbatch " + str(i))
+
                 # Generate indicies for the batch
                 start_idx = (i * batch_size) % Xd.shape[0]
                 idx = train_indicies[start_idx : start_idx + batch_size]

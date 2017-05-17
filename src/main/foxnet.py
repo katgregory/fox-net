@@ -5,20 +5,57 @@ xavier = tf.contrib.layers.xavier_initializer
 
 class FoxNet(object):
 
-    def simple_cnn(self, X, y, height, width, n_channels, filter_size, n_filters, n_labels):
+    def simple_cnn(self, X, y, filter_size, n_filters, n_labels, is_training):
+        # Input Layer [batch_size, image_width, image_height, channels]
+        input_layer = X
 
-        # TODO: Still not totally sure how we arrive at this number, but it doesn't crash
-        magic_number = 2457600 #(height * width) / 2 * n_filters
+        # Convolutional Layer + ReLU 1
+        conv1 = tf.layers.conv2d(
+            inputs=input_layer,
+            filters=n_filters,
+            kernel_size=filter_size,
+            padding="same",
+            activation=tf.nn.relu
+        )
 
-        # Setup variables
-        Wconv1 = tf.get_variable("Wconv1", shape=[filter_size, filter_size, n_channels, n_filters])
-        bconv1 = tf.get_variable("bconv1", shape=[n_filters])
-        W1 = tf.get_variable("W1", shape=[magic_number, n_labels])
-        b1 = tf.get_variable("b1", shape=[n_labels])
+        # Batch norm 1
+        norm1 = tf.layers.batch_normalization(
+            conv1,
+            axis=-1, 
+            momentum=0.99,
+            epsilon=0.001,
+            training=is_training
+        )
 
-        # Define our graph
-        a1 = tf.nn.conv2d(X, Wconv1, strides=[1, 2, 2, 1], padding='SAME') + bconv1
-        h1 = tf.nn.relu(a1)
-        h1_flat = tf.reshape(h1, [-1, magic_number])
-        y_out = tf.matmul(h1_flat, W1) + b1
+        # Convolutional Layer + ReLU 2
+        conv2 = tf.layers.conv2d(
+            inputs=norm1,
+            filters=n_filters,
+            kernel_size=n_filters + 2,
+            padding="same",
+            activation=tf.nn.relu
+        )
+
+        # Batch norm 2
+        norm2 = tf.layers.batch_normalization(
+            conv2,
+            axis=-1, 
+            momentum=0.99,
+            epsilon=0.001,
+            training=is_training
+        )
+
+        # Max pooling
+        pool = tf.layers.max_pooling2d(inputs=norm2, pool_size=[2, 2], strides=2)
+
+        # Affine + ReLU
+        magic_number = 524288 / 64 * 300 # TODO: This works - but I don't know why.
+        pool_flat = tf.reshape(pool, [-1, magic_number]) 
+        affine_relu = tf.layers.dense(inputs=pool_flat, units=1024, activation=tf.nn.relu)
+
+        # Dropout
+        dropout = tf.layers.dropout(inputs=affine_relu, rate=0.5, training=is_training)
+
+        # Logits Layer
+        y_out = tf.layers.dense(inputs=dropout, units=n_labels)
         return y_out
