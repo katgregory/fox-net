@@ -17,11 +17,12 @@ class FoxNetModel(object):
                 width,
                 channels,
                 frames_per_state,
-                num_actions,
+                actions,
                 verbose = False):
 
         self.lr = lr
         self.verbose = verbose
+        self.actions = actions
 
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
@@ -37,7 +38,7 @@ class FoxNetModel(object):
             self.probs = foxnet.simple_cnn(X, y)
 
         # Define loss
-        total_loss = tf.losses.hinge_loss(tf.one_hot(y, num_actions), logits=self.probs)
+        total_loss = tf.losses.hinge_loss(tf.one_hot(y, len(actions)), logits=self.probs)
         self.loss = tf.reduce_mean(total_loss)
 
         # Define optimizer

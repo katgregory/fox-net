@@ -27,19 +27,11 @@ tf.app.flags.DEFINE_string("data_dir", "data/labeled_051517_2114/", "data direct
 tf.app.flags.DEFINE_integer("image_width", 640, "")
 tf.app.flags.DEFINE_integer("image_height", 480, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
-tf.app.flags.DEFINE_integer("num_actions", 7, "")
 tf.app.flags.DEFINE_integer("batch_size", 5, "")
 
-FLAGS = tf.app.flags.FLAGS
+ACTIONS = ['a', 'f', 'i', 'j', 'k', 'l', 'n', 's', '<enter>']
 
-def get_data_params():
-    return {
-        "data_dir": FLAGS.data_dir,
-        "num_images": FLAGS.num_images,
-        "frames_per_state": FLAGS.frames_per_state,
-        "eval_proportion": FLAGS.eval_proportion,
-        "image_size": 28,
-    }
+FLAGS = tf.app.flags.FLAGS
 
 def initialize_model(session, model):
     logging.info("Created model with fresh parameters.")
@@ -59,7 +51,7 @@ def run_model(train_dataset, eval_dataset, lr):
                 FLAGS.image_width,
                 FLAGS.num_channels,
                 FLAGS.frames_per_state,
-                FLAGS.num_actions
+                ACTIONS
             )
 
     with tf.Session() as sess:
@@ -68,6 +60,16 @@ def run_model(train_dataset, eval_dataset, lr):
         foxnet.run(sess, y_out, X_train, y_train, FLAGS.num_epochs, FLAGS.batch_size, 100, True, True)
         print('Validating...')
         foxnet.run(sess, y_out, X_val, y_val, 1, FLAGS.batch_size)
+
+def get_data_params():
+    return {
+        "data_dir": FLAGS.data_dir,
+        "num_images": FLAGS.num_images,
+        "frames_per_state": FLAGS.frames_per_state,
+        "actions": ACTIONS,
+        "eval_proportion": FLAGS.eval_proportion,
+        "image_size": 28,
+    }
 
 def main(_):
     # TODO: Eventually, should have separate dev and test datasets and require that we specify which we want to use.
