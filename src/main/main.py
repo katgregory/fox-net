@@ -30,7 +30,7 @@ tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n'}
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
 
 FLAGS = tf.app.flags.FLAGS
 
