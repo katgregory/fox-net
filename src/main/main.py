@@ -24,7 +24,7 @@ tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 
 # INFRASTRUCTURE
-tf.app.flags.DEFINE_string("data_dir", "../../data/", "data directory (default ../../data)")
+tf.app.flags.DEFINE_string("data_dir", "./data/data_051617/", "data directory (default ./data)")
 tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
@@ -63,9 +63,9 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, FLAGS.num_epochs, 1, True, True)
-        # print('Validating...')
-        # foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, 1)
+        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, FLAGS.num_epochs, 1, True, False)
+        print('Validating...')
+        foxnet.run(sess, X_eval, y_train, FLAGS.batch_size, 1)
 
 def get_data_params():
     return {
