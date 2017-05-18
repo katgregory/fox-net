@@ -1,5 +1,6 @@
 # Parcel data into usable format
 
+from collections import Counter
 import numpy as np
 import os
 import re
@@ -17,28 +18,31 @@ def load_datasets(tier, params):
     print("Loading images:")
     images = []
     labels = []
+    action_counter = Counter()
 
     for dirname in tqdm(os.listdir(params["data_dir"])):
-    	for filename in tqdm(os.listdir(params["data_dir"] + '/' + dirname)):
-	        # Stop early if have enough images
-	        if params["num_images"] != -1 and len(images) >= params["num_images"]:
-	            break
+        for filename in tqdm(os.listdir(params["data_dir"] + '/' + dirname)):
+            # Stop early if have enough images
+            if params["num_images"] != -1 and len(images) >= params["num_images"]:
+                break
 
-	        # Extract metadata
-	        match = re.search(pattern, filename)
-	        frame_number = match.group(1)
-	        action = match.group(2)
+            # Extract metadata
+            match = re.search(pattern, filename)
+            frame_number = match.group(1)
+            action = match.group(2)
 
-	        # Convert image and add to collection
-	        # Shape of img is (480, 640, 3)
+            # Convert image and add to collection
+            # Shape of img is (480, 640, 3)
 
-	        img = ndimage.imread(params["data_dir"] + dirname + '/' + filename)
-	        img = misc.imresize(img, (params['height'], params['width']))
+            img = ndimage.imread(params["data_dir"] + dirname + '/' + filename)
+            img = misc.imresize(img, (params['height'], params['width']))
 
-	        if img is not None and action in params["actions"]:
-	            images.append(img)
-	            labels.append(params["actions"].index(action))
+            if img is not None and action in params["actions"]:
+                images.append(img)
+                labels.append(params["actions"].index(action))
+                action_counter[action] += 1
     print("Loaded " + str(len(images)) + " images.")
+    print("Action counts: " + str(action_counter))
 
     # Create states by adding a third dimension over n_frames frames
     # Final state has shape (48, 64, 3, n_frames)
