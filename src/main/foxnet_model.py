@@ -91,6 +91,7 @@ class FoxNetModel(object):
             validate_variables = [self.loss, correct_validation]
 
         iter_cnt = 0 # Counter for printing
+        epoch_losses = []
         for e in range(epochs):
             # Keep track of losses and accuracy
             correct = 0
@@ -126,6 +127,7 @@ class FoxNetModel(object):
 
             total_correct = correct * 1.0 / Xd.shape[0]
             total_loss = np.sum(losses) / Xd.shape[0]
+            epoch_losses.append(total_loss)
             print("Epoch {2}, Overall training loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(total_loss, total_correct, e+1))
 
@@ -140,13 +142,12 @@ class FoxNetModel(object):
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
-        # TODO: Fix plotting code
         if plot_losses:
-            plt.plot(losses)
+            plt.plot(epoch_losses)
             plt.grid(True)
-            plt.title('Epoch {} Loss'.format(e+1))
-            plt.xlabel('minibatch number')
-            plt.ylabel('minibatch loss')
+            plt.title('Training Loss'.format(e+1))
+            plt.xlabel('epoch number')
+            plt.ylabel('epoch loss')
             plt.show()
 
         return total_loss, total_correct
