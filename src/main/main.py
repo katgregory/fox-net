@@ -28,6 +28,7 @@ tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "./data/data_051617/", "data directory (default ./data)")
+tf.app.flags.DEFINE_string("results_dir", "./results/", "")
 tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
@@ -66,7 +67,21 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, epochs=FLAGS.num_epochs, training_now=True, validate_incrementally=FLAGS.validate_incrementally, X_eval=X_eval, y_eval=y_eval, print_every=1, plot_losses=FLAGS.plot_losses, plot_accuracies=FLAGS.plot_accuracies)
+        foxnet.run(
+                sess,
+                X_train,
+                y_train,
+                FLAGS.batch_size,
+                epochs=FLAGS.num_epochs,
+                training_now=True,
+                validate_incrementally=FLAGS.validate_incrementally,
+                X_eval=X_eval,
+                y_eval=y_eval,
+                print_every=1,
+                plot_losses=FLAGS.plot_losses,
+                plot_accuracies=FLAGS.plot_accuracies,
+                results_dir=FLAGS.results_dir
+            )
         print('Validating...')
         foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
 

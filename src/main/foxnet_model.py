@@ -1,5 +1,6 @@
 # Tensorflow model declarations
 
+import datetime
 from foxnet import FoxNet
 import math
 import numpy as np
@@ -76,7 +77,8 @@ class FoxNetModel(object):
             y_eval=None,
             print_every=100,
             plot_losses=False,
-            plot_accuracies=False):
+            plot_accuracies=False,
+            results_dir=""):
 
         # Have tensorflow compute accuracy
         # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
@@ -156,6 +158,7 @@ class FoxNetModel(object):
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
+        dt = str(datetime.datetime.now())
         if plot_losses:
             train_line = plt.plot(epoch_losses, label="Training loss")
             if validate_incrementally:
@@ -165,7 +168,8 @@ class FoxNetModel(object):
             plt.title('Loss'.format(e+1))
             plt.xlabel('epoch number')
             plt.ylabel('epoch loss')
-            plt.show()
+            plt.savefig(results_dir + "loss/" + dt + ".png")
+            plt.close()
 
         if plot_accuracies:
             train_line = plt.plot(epoch_accuracies, label="Training accuracy")
@@ -176,6 +180,7 @@ class FoxNetModel(object):
             plt.title('Accuracy'.format(e+1))
             plt.xlabel('epoch number')
             plt.ylabel('epoch accuracy')
-            plt.show()
+            plt.savefig(results_dir + "accuracy/" + dt + ".png")
+            plt.close()
 
         return total_loss, total_correct
