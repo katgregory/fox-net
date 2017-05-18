@@ -13,6 +13,9 @@ tf.app.flags.DEFINE_bool("validate", False, "")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
+tf.app.flags.DEFINE_bool("validate_incrementally", True, "")
+tf.app.flags.DEFINE_bool("plot_losses", True, "")
+tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
 
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -63,7 +66,7 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, epochs=FLAGS.num_epochs, print_every=1, training_now=True, plot_losses=True, X_eval=X_eval, y_eval=y_eval)
+        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, epochs=FLAGS.num_epochs, training_now=True, validate_incrementally=FLAGS.validate_incrementally, X_eval=X_eval, y_eval=y_eval, print_every=1, plot_losses=FLAGS.plot_losses, plot_accuracies=FLAGS.plot_accuracies)
         print('Validating...')
         foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
 

@@ -64,10 +64,19 @@ class FoxNetModel(object):
     # RUN GRAPH
     #############################
 
-    def run(self, session, Xd, yd,
-            batch_size, epochs=1, print_every=100,
-            training_now=False, plot_losses=False,
-            X_eval=None, y_eval=None):
+    def run(self,
+            session,
+            Xd,
+            yd,
+            batch_size,
+            epochs=1,
+            training_now=False,
+            validate_incrementally=False,
+            X_eval=None,
+            y_eval=None,
+            print_every=100,
+            plot_losses=False,
+            plot_accuracies=False):
 
         # Have tensorflow compute accuracy
         # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
@@ -85,14 +94,15 @@ class FoxNetModel(object):
         if training_now:
             variables[-1] = self.train_step
 
-        validate_incrementally = X_eval is not None and y_eval is not None
         if validate_incrementally:
             correct_validation = tf.equal(tf.argmax(self.probs, 1), y_eval)
             validate_variables = [self.loss, correct_validation]
             validate_losses = []
+            validate_accuracies = []
 
         iter_cnt = 0 # Counter for printing
         epoch_losses = []
+        epoch_accuracies = []
         for e in range(epochs):
             # Keep track of losses and accuracy
             correct = 0
@@ -129,6 +139,7 @@ class FoxNetModel(object):
             total_correct = correct * 1.0 / Xd.shape[0]
             total_loss = np.sum(losses) / Xd.shape[0]
             epoch_losses.append(total_loss)
+            epoch_accuracies.append(total_correct)
             print("Epoch {2}, Overall training loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(total_loss, total_correct, e+1))
 
@@ -139,8 +150,9 @@ class FoxNetModel(object):
                     self.is_training: False
                 }
                 loss, corr = session.run(validate_variables, feed_dict=validate_feed_dict)
-                validate_correct = np.sum(corr * 1.0 / X_eval.shape[0])
                 validate_losses.append(loss)
+                validate_correct = np.sum(corr * 1.0 / X_eval.shape[0])
+                validate_accuracies.append(validate_correct)
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
@@ -153,6 +165,17 @@ class FoxNetModel(object):
             plt.title('Loss'.format(e+1))
             plt.xlabel('epoch number')
             plt.ylabel('epoch loss')
+            plt.show()
+
+        if plot_accuracies:
+            train_line = plt.plot(epoch_accuracies, label="Training accuracy")
+            if validate_incrementally:
+                validate_line = plt.plot(validate_accuracies, label="Validation accuracy")
+            plt.legend()
+            plt.grid(True)
+            plt.title('Accuracy'.format(e+1))
+            plt.xlabel('epoch number')
+            plt.ylabel('epoch accuracy')
             plt.show()
 
         return total_loss, total_correct
