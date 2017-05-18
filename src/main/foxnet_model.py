@@ -158,29 +158,23 @@ class FoxNetModel(object):
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
+        # Plot
         dt = str(datetime.datetime.now())
         if plot_losses:
-            train_line = plt.plot(epoch_losses, label="Training loss")
-            if validate_incrementally:
-                validate_line = plt.plot(validate_losses, label="Validation loss")
-            plt.legend()
-            plt.grid(True)
-            plt.title('Loss'.format(e+1))
-            plt.xlabel('epoch number')
-            plt.ylabel('epoch loss')
-            plt.savefig(results_dir + "loss/" + dt + ".png")
-            plt.close()
-
+            plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
         if plot_accuracies:
-            train_line = plt.plot(epoch_accuracies, label="Training accuracy")
-            if validate_incrementally:
-                validate_line = plt.plot(validate_accuracies, label="Validation accuracy")
-            plt.legend()
-            plt.grid(True)
-            plt.title('Accuracy'.format(e+1))
-            plt.xlabel('epoch number')
-            plt.ylabel('epoch accuracy')
-            plt.savefig(results_dir + "accuracy/" + dt + ".png")
-            plt.close()
+            plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
+
+def plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
+    train_line = plt.plot(train, label="Training " + plot_name)
+    if validate_incrementally:
+        validate_line = plt.plot(validate, label="Validation " + plot_name)
+    plt.legend()
+    plt.grid(True)
+    plt.title(plot_name)
+    plt.xlabel('epoch number')
+    plt.ylabel('epoch ' + plot_name)
+    plt.savefig(results_dir + plot_name + "/" + dt + ".png")
+    plt.close()
