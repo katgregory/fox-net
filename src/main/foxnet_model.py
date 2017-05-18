@@ -89,6 +89,7 @@ class FoxNetModel(object):
         if validate_incrementally:
             correct_validation = tf.equal(tf.argmax(self.probs, 1), y_eval)
             validate_variables = [self.loss, correct_validation]
+            validate_losses = []
 
         iter_cnt = 0 # Counter for printing
         epoch_losses = []
@@ -139,13 +140,17 @@ class FoxNetModel(object):
                 }
                 loss, corr = session.run(validate_variables, feed_dict=validate_feed_dict)
                 validate_correct = np.sum(corr * 1.0 / X_eval.shape[0])
+                validate_losses.append(loss)
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
         if plot_losses:
-            plt.plot(epoch_losses)
+            train_line = plt.plot(epoch_losses, label="Training loss")
+            if validate_incrementally:
+                validate_line = plt.plot(validate_losses, label="Validation loss")
+            plt.legend()
             plt.grid(True)
-            plt.title('Training Loss'.format(e+1))
+            plt.title('Loss'.format(e+1))
             plt.xlabel('epoch number')
             plt.ylabel('epoch loss')
             plt.show()

@@ -63,7 +63,7 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, epochs=FLAGS.num_epochs, print_every=1, training_now=True, plot_losses=False, X_eval=X_eval, y_eval=y_eval)
+        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, epochs=FLAGS.num_epochs, print_every=1, training_now=True, plot_losses=True, X_eval=X_eval, y_eval=y_eval)
         print('Validating...')
         foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
 
