@@ -12,7 +12,7 @@ tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn")
 tf.app.flags.DEFINE_bool("validate", False, "")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
-tf.app.flags.DEFINE_float("eval_proportion", 0.1, "")
+tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
 
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -63,9 +63,9 @@ def run_model(train_dataset, eval_dataset, lr):
     with tf.Session() as sess:
         initialize_model(sess, foxnet)
         print('Training...')
-        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, FLAGS.num_epochs, 1, True, False)
+        foxnet.run(sess, X_train, y_train, FLAGS.batch_size, epochs=FLAGS.num_epochs, print_every=1, training_now=True, plot_losses=False, X_eval=X_eval, y_eval=y_eval)
         print('Validating...')
-        foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, 1)
+        foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
 
 def get_data_params():
     return {

@@ -66,7 +66,8 @@ class FoxNetModel(object):
 
     def run(self, session, Xd, yd,
             batch_size, epochs=1, print_every=100,
-            training_now=False, plot_losses=False):
+            training_now=False, plot_losses=False,
+            X_eval=None, y_eval=None):
 
         # Have tensorflow compute accuracy
         # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
@@ -83,6 +84,11 @@ class FoxNetModel(object):
         variables = [self.loss, correct_prediction, accuracy]
         if training_now:
             variables[-1] = self.train_step
+
+        validate_incrementally = X_eval is not None and y_eval is not None
+        if validate_incrementally:
+            correct_validation = tf.equal(tf.argmax(self.probs, 1), y_eval)
+            validate_variables = [self.loss, correct_validation]
 
         iter_cnt = 0 # Counter for printing
         for e in range(epochs):
@@ -120,8 +126,19 @@ class FoxNetModel(object):
 
             total_correct = correct * 1.0 / Xd.shape[0]
             total_loss = np.sum(losses) / Xd.shape[0]
-            print("Epoch {2}, Overall loss = {0:.3g} and accuracy of {1:.3g}"\
+            print("Epoch {2}, Overall training loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(total_loss, total_correct, e+1))
+
+            if (validate_incrementally):
+                validate_feed_dict = {
+                    self.X: X_eval,
+                    self.y: y_eval,
+                    self.is_training: False
+                }
+                loss, corr = session.run(validate_variables, feed_dict=validate_feed_dict)
+                validate_correct = np.sum(corr * 1.0 / X_eval.shape[0])
+                print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
+                  .format(loss, validate_correct, e+1))
 
         # TODO: Fix plotting code
         if plot_losses:
