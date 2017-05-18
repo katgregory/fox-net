@@ -65,7 +65,7 @@ def run_model(train_dataset, eval_dataset, lr):
         print('Training...')
         foxnet.run(sess, X_train, y_train, FLAGS.batch_size, FLAGS.num_epochs, 1, True, False)
         print('Validating...')
-        foxnet.run(sess, X_eval, y_train, FLAGS.batch_size, 1)
+        foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, 1)
 
 def get_data_params():
     return {
