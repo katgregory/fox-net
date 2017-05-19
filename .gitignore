@@ -1,3 +1,6 @@
 *.pyc
 *.png
+*.zip
 data/reward/output/*
+src/main/data/*
+src/main/model/*
