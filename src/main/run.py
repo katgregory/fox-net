@@ -1,4 +1,4 @@
-import argparse
+import os
 import numpy as np
 import tensorflow as tf
 
@@ -21,6 +21,7 @@ tf.app.flags.DEFINE_bool("plot_losses", True, "")
 tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
+tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files")
 
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -75,7 +76,9 @@ def run_model(train_dataset, eval_dataset, lr):
         frame_reader = FrameReader()
 
         # Load the model
-        sv = tf.train.Supervisor(logdir="./model", save_model_secs=60)
+        model_dir = './models/%s/%s' % (FLAGS.model_dir, FLAGS.model_dir)
+        print('Loading model from dir: %s' % model_dir)
+        sv = tf.train.Supervisor(logdir=model_dir, save_model_secs=60)
         with sv.managed_session() as sess:
             if not sv.should_stop():
                 while True:
@@ -110,8 +113,13 @@ def run_model(train_dataset, eval_dataset, lr):
                 )
 
             # Save model
+            model_dir = './models/%s/%s' % (FLAGS.model_dir, FLAGS.model_dir)
+            if not os.path.exists(model_dir):
+                os.makedirs(model_dir)
+
             saver = tf.train.Saver()
-            saver.save(sess, './model/saved_model')
+            saver.save(sess, model_dir)
+            print('Saved model to dir: %s' % model_dir)
 
             print('Validating...')
             foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
