@@ -79,7 +79,9 @@ def run_model(train_dataset, eval_dataset, lr):
         # saver.restore(sess, tf.train.latest_checkpoint('./model/'))
         # print(tf.global_variables())
 
-        sv = tf.train.Supervisor(logdir='./models/%s' % FLAGS.model_dir, save_model_secs=60)
+        model_dir = './models/%s' % FLAGS.model_dir
+        print('Loading model from dir: %s' % model_dir)
+        sv = tf.train.Supervisor(logdir=model_dir, save_model_secs=60)
         with sv.managed_session() as sess:
             if not sv.should_stop():
                 while True:
@@ -121,6 +123,7 @@ def run_model(train_dataset, eval_dataset, lr):
 
             saver = tf.train.Saver()
             saver.save(sess, model_dir)
+            print('Saved model to dir: %s' % model_dir)
 
             print('Validating...')
             foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
