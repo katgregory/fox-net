@@ -49,7 +49,8 @@ class FrameReader():
 			's': 0xb0000000, 
 			'd': 0x500000, 
 			'j': 0x80, 
-			'l': 0x10, 
+			# 'l': 0x10,
+			'l': 0, 
 			'n': 0
 		}
 		self.s.send(struct.pack('I',action_map[action]))

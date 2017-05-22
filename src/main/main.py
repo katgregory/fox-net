@@ -40,6 +40,7 @@ tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -74,10 +75,6 @@ def run_model(train_dataset, eval_dataset, lr):
         frame_reader = FrameReader()
 
         # Load the model
-        # saver = tf.train.import_meta_graph('./model/saved_model.meta')
-        # saver.restore(sess, tf.train.latest_checkpoint('./model/'))
-        # print(tf.global_variables())
-
         sv = tf.train.Supervisor(logdir="./model", save_model_secs=60)
         with sv.managed_session() as sess:
             if not sv.should_stop():
@@ -87,14 +84,13 @@ def run_model(train_dataset, eval_dataset, lr):
                     X_emu = np.expand_dims(X_emu, axis=0)
                     # pred = foxnet.run(foxnet.probs, feed_dict={foxnet.X:X_emu})
                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
-                    action = ACTIONS[np.argmax(pred)]
-                    print("action: " + str(action))
+                    action_idx = np.argmax(pred)
+                    action = ACTIONS[action_idx]
+                    print("action: " + str(ACTION_NAMES[action_idx]))
                     frame_reader.send_action(action)
-    
-    else:  
+    else:
+        # Train a new Model
         with tf.Session() as sess:
-        # Train a new model
-
             initialize_model(sess, foxnet)
             print('Training...')
             foxnet.run(

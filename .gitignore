@@ -1,6 +1,7 @@
 *.pyc
 *.png
 *.zip
+*.n64
 data/reward/output/*
 src/main/data/*
 src/main/model/*
