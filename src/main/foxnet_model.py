@@ -80,27 +80,6 @@ class FoxNetModel(object):
             plot_accuracies=False,
             results_dir=""):
 
-        # Have tensorflow compute accuracy
-        # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
-        correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd)
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        batch_size = yd.shape[0] # TODO: Add back batch sizes
-
-        # Shuffle indicies
-        train_indicies = np.arange(Xd.shape[0])
-        np.random.shuffle(train_indicies)
-
-        # Setting up variables we want to compute (and optimizing)
-        # If we have a training function, add that to things we compute
-        variables = [self.loss, correct_prediction, accuracy]
-        if training_now:
-            variables[-1] = self.train_step
-
-        if validate_incrementally:
-            correct_validation = tf.equal(tf.argmax(self.probs, 1), y_eval)
-            validate_variables = [self.loss, correct_validation]
-            validate_losses = []
-            validate_accuracies = []
 
         iter_cnt = 0 # Counter for printing
         epoch_losses = []
@@ -112,9 +91,34 @@ class FoxNetModel(object):
 
             # Make sure we iterate over the dataset once
             for i in range(int(math.ceil(Xd.shape[0] / batch_size))):
-                # Generate indicies for the batch
+                # Shuffle indices
+                train_indices = np.arange(Xd.shape[0])
+                np.random.shuffle(train_indices)
+
+                # Generate indices for the batch
                 start_idx = (i * batch_size) % Xd.shape[0]
-                idx = train_indicies[start_idx : start_idx + batch_size]
+                idx = train_indices[start_idx : start_idx + batch_size]
+
+                Xd_batch = Xd[idx,:]
+                yd_batch = yd[idx]
+
+                # Have tensorflow compute accuracy
+                # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
+                correct_prediction = tf.equal(tf.argmax(self.probs, 1), yd_batch)
+                accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+                # batch_size = yd.shape[0] # TODO: Add back batch sizes
+
+                # Setting up variables we want to compute (and optimizing)
+                # If we have a training function, add that to things we compute
+                variables = [self.loss, correct_prediction, accuracy]
+                if training_now:
+                    variables[-1] = self.train_step
+
+                if validate_incrementally:
+                    correct_validation = tf.equal(tf.argmax(self.probs, 1), y_eval[idx])
+                    validate_variables = [self.loss, correct_validation]
+                    validate_losses = []
+                    validate_accuracies = []
 
                 # Create a feed dictionary for this batch
                 feed_dict = { self.X: Xd[idx,:],
@@ -122,7 +126,8 @@ class FoxNetModel(object):
                               self.is_training: training_now }
 
                 # Get actual batch size
-                actual_batch_size = yd[idx].shape[0]
+                # actual_batch_size = yd[idx].shape[0]
+                actual_batch_size = batch_size
 
                 # Have tensorflow compute loss and correct predictions
                 # and (if given) perform a training step
@@ -158,12 +163,12 @@ class FoxNetModel(object):
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
-        # Plot
-        dt = str(datetime.datetime.now())
-        if plot_losses:
-            plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
-        if plot_accuracies:
-            plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
+        # # Plot
+        # dt = str(datetime.datetime.now())
+        # if plot_losses:
+        #     plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
+        # if plot_accuracies:
+        #     plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
 

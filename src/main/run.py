@@ -17,7 +17,7 @@ tf.app.flags.DEFINE_bool("validate", False, "")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
-tf.app.flags.DEFINE_bool("validate_incrementally", True, "")
+tf.app.flags.DEFINE_bool("validate_incrementally", False, "")
 tf.app.flags.DEFINE_bool("plot_losses", True, "")
 tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
 
@@ -41,8 +41,12 @@ tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
-ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
+# ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
+# ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
+
+
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'l']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start']
 
 FLAGS = tf.app.flags.FLAGS
 
