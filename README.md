@@ -2,7 +2,7 @@
 
 To run, from this directory, run:
 
-python src/main/main.py
+python src/main/run.py
 
 Other optional arguments include:
 --[dev,test]
