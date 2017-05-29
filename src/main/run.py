@@ -82,10 +82,7 @@ def run_model(train_dataset, eval_dataset, lr):
         with sv.managed_session() as sess:
             if not sv.should_stop():
                 while True:
-                    X_emu = frame_reader.read_frame()
-                    X_emu = imresize(X_emu, (FLAGS.image_height, FLAGS.image_width, 3))
-                    X_emu = np.expand_dims(X_emu, axis=0)
-                    # pred = foxnet.run(foxnet.probs, feed_dict={foxnet.X:X_emu})
+                    X_emu = frame_reader.read_frame(FLAGS.image_height, FLAGS.image_width)
                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
                     action_idx = np.argmax(pred)
                     action = ACTIONS[action_idx]

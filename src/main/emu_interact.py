@@ -1,8 +1,9 @@
 import socket
 import numpy as np
 import os, sys, struct
-
 import time
+from scipy.misc import imresize
+from matplotlib import pyplot as plt
 
 
 class FrameReader():
@@ -27,7 +28,7 @@ class FrameReader():
 				print(".")
 				time.sleep(0.2)
 
-	def read_frame(self):
+	def read_frame(self, img_height, img_width):
 		toread = self.BUF_SIZE
 		buf = bytearray(self.BUF_SIZE)
 		view = memoryview(buf)
@@ -39,6 +40,13 @@ class FrameReader():
 
 		img_flat = np.frombuffer(buf[::-1], dtype=np.uint8)
 		img = np.reshape(img_flat, (self.HEIGHT, self.WIDTH, self.DEPTH))[:,::-1,:]
+		img = imresize(img, (img_height, img_width, self.DEPTH))
+
+		# plt.ion()
+		# plt.imshow(img)
+		# plt.show()
+		img = np.expand_dims(img, axis=0)
+
 		return img
 
 	def send_action(self, action):
