@@ -12,13 +12,15 @@ from tqdm import *
 def load_datasets(tier, params):
     print("##### LOADING DATA ########################################")
     # Matching group 1 is frame number, matching group 2 is action
-    pattern = re.compile('(\d+)_(.*).png')
+    pattern = re.compile('i=(\d+)_a=(.*).png')
 
     # Load images
     print("Loading images:")
     images = []
     labels = []
     action_counter = Counter()
+
+    print(params['actions'])
 
     for dirname in tqdm(os.listdir(params["data_dir"])):
         for filename in tqdm(os.listdir(params["data_dir"] + '/' + dirname)):
@@ -30,7 +32,6 @@ def load_datasets(tier, params):
             match = re.search(pattern, filename)
             frame_number = match.group(1)
             action = match.group(2)
-
             # Convert image and add to collection
             # Shape of img is (480, 640, 3)
 
