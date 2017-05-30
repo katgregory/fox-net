@@ -210,6 +210,7 @@ def log(done, callback, sleep_interval=.005):
 def log2(sleep_interval=.005):
     sleep(sleep_interval)
     changed, modifiers, keys = fetch_keys()
+    print(keys, modifiers)
     return keys, modifiers
 
 

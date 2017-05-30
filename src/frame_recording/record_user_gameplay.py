@@ -59,7 +59,7 @@ def get_keys():
 	# If no key pressed, set to 'n'
 	if keys == None:
 		keys = 'n'
-	# Don't get movement if shoot
+	# Don't get movement if shootsudo 
 	elif keys == 'j':
 		return keys
 
