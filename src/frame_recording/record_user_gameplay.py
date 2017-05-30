@@ -15,6 +15,15 @@ BUF_SIZE=(WIDTH*HEIGHT*DEPTH)
 # Create the socket for communicating with the emulator
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+modifier_mappings = {
+	'left shift': 'a',
+	'right shift': 'd',
+	'left alt': 'w',
+	'right alt': 's',
+	'left ctrl': 'n',
+	'right ctrl': 'n',
+}
+
 
 def launch_socket():
 	# Wait for the emulator to connect
@@ -46,8 +55,21 @@ def read_frame():
 
 def get_keys():
 	keys, modifiers = keylogger.log2()
+
+	# If no key pressed, set to 'n'
 	if keys == None:
 		keys = 'n'
+	# Don't get movement if shoot
+	elif keys == 'j':
+		return keys
+
+	# Get movement as modifiers, as these register key holds
+	for mod in modifiers.keys():
+		if modifiers[mod] == True:
+			keys = modifier_mappings[mod]
+
+	
+
 	return keys
 
 
@@ -96,6 +118,7 @@ def main():
 		frame = read_frame()
 		# Grab keypresses
 		keys = get_keys()
+		print(keys)
 		# Emulator requires a value be sent back over socket
 		s.send(struct.pack('I',0))
 		# Save labeled image

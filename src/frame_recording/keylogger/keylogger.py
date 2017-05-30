@@ -217,6 +217,6 @@ def log2(sleep_interval=.005):
 if __name__ == "__main__":
     now = time()
     done = lambda: time() > now + 60
-    def print_keys(t, modifiers, keys): print "%.2f   %r   %r" % (t, keys, modifiers)
+    def print_keys(t, modifiers, keys): print("%.2f   %r   %r" % (t, keys, modifiers))
 
     log(done, print_keys)
