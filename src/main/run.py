@@ -41,12 +41,8 @@ tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
-# ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
-# ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
-
-
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'l']
-ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start']
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
