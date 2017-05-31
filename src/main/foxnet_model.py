@@ -51,6 +51,10 @@ class FoxNetModel(object):
             self.probs = foxnet.fully_connected(self.X, self.y, len(actions))
         elif (model == "simple_cnn"): # Only works if !multi_frame_state
             self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, len(actions), self.is_training)
+        elif (model == "dqn"):
+            self.probs = foxnet.DQN(self.X, self.y, len(actions))
+        else:
+            raise ValueError("Invalid model specified. Valid options are: 'fcc', 'simple_cnn', 'dqn'")
 
         # Define loss
         onehot_labels = tf.one_hot(self.y, len(actions))
