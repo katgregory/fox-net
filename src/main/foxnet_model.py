@@ -10,6 +10,8 @@ from tqdm import *
 import matplotlib.pyplot as plt
 
 from emu_interact import FrameReader
+from utils.replay_buffer import ReplayBuffer
+from collections import deque
 
 ph = tf.placeholder
 
@@ -178,43 +180,50 @@ class FoxNetModel(object):
 
         return total_loss, total_correct
 
-    def run_online(self, sess, actions, e, image_height, image_width, ):
+    def run_online(self, sess, actions, e, out_height, out_width):
         # Initialize emulator transfers
-        frame_reader = FrameReader()
-        reward_extractor = RewardExtractor()
+        frame_reader = FrameReader(out_height, out_width)
+        # reward_extractor = RewardExtractor() # Uncomment when templates available
 
         total_reward = 0
 
-        state = frame_reader.read_frame(image_height, image_width)
+        state = frame_reader.read_frame()
         while True:
-            # TODO: replay memory stuff
+            # replay memory stuff
 
             # e-greedy exploration
             if np.random.uniform() >= e:
-                feed_dict = {foxnet.X: X_emu, foxnet.is_training: False}
-                pred = sess.run(foxnet.probs, feed_dict = feed_dict)
-                action_idx = np.argmax(pred)
-                action = actions[action_idx]
+                feed_dict = {self.X: state, self.is_training: False}
+                q_values = sess.run(self.probs, feed_dict = feed_dict)
+                action = np.argmax(q_values)
+                # action = actions[action_idx]
             else:
-                action = np.random.choice(actions)
-            print("action " + str(action))
+                action = np.random.choice(np.arange(len(actions)))
+            print("action " + str(actions[action]))
 
-            # TOD0: store q values
+            # TODO: store q values
 
             # Send action to emulator
-            frame_reader.send_action(action)
+            frame_reader.send_action(actions[action])
 
             # Get next state
             new_state = frame_reader.read_frame()
 
-            # TODO: get reward
+            # TODO: get reward, uncomment when templates available
             # reward = reward_extractor.get_reward(new_state)
-            reward = 1
+            reward = np.random.uniform()
+
+            # TODO: implement or remove done
+            done = False
+
             # TODO: store transition
 
             state = new_state
 
             # TODO: Perform training step
+
+            # count reward
+            total_reward += reward
 
 
 

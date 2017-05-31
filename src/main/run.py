@@ -120,7 +120,9 @@ def run_model(train_dataset, eval_dataset, lr):
                 foxnet.run_online(
                     sess,
                     ACTIONS,
-                    e=0.25,
+                    0.25,
+                    FLAGS.image_height,
+                    FLAGS.image_width,
                 )
 
             # Save model
