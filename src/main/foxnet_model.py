@@ -10,7 +10,6 @@ from tqdm import *
 import matplotlib.pyplot as plt
 
 from emu_interact import FrameReader
-from utils.replay_buffer import ReplayBuffer
 from collections import deque
 
 ph = tf.placeholder
