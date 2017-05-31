@@ -23,6 +23,7 @@ tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files")
+tf.app.flags.DEFINE_bool("train_online", False, "")
 
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -74,7 +75,7 @@ def run_model(train_dataset, eval_dataset, lr):
 
     if FLAGS.load_model:
         # Create an object to get emulator frames
-        frame_reader = FrameReader()
+        frame_reader = FrameReader(FLAGS.image_height, FLAGS.image_width)
 #        frame_displayer = FrameDisplayer()
 
         # Load the model
@@ -85,7 +86,7 @@ def run_model(train_dataset, eval_dataset, lr):
         with sv.managed_session() as sess:
             if not sv.should_stop():
                 while True:
-                    X_emu = frame_reader.read_frame(FLAGS.image_height, FLAGS.image_width)
+                    X_emu = frame_reader.read_frame()
 #                    frame_displayer.display_frame(X_emu)
                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
                     action_idx = np.argmax(pred)
@@ -97,20 +98,29 @@ def run_model(train_dataset, eval_dataset, lr):
         with tf.Session() as sess:
             initialize_model(sess, foxnet)
             print('Training...')
-            foxnet.run(
+            if FLAGS.train_online == False:
+
+                foxnet.run(
+                        sess,
+                        X_train,
+                        y_train,
+                        FLAGS.batch_size,
+                        epochs=FLAGS.num_epochs,
+                        training_now=True,
+                        validate_incrementally=FLAGS.validate_incrementally,
+                        X_eval=X_eval,
+                        y_eval=y_eval,
+                        print_every=1,
+                        plot_losses=FLAGS.plot_losses,
+                        plot_accuracies=FLAGS.plot_accuracies,
+                        results_dir=FLAGS.results_dir
+                    )
+
+            else:
+                foxnet.run_online(
                     sess,
-                    X_train,
-                    y_train,
-                    FLAGS.batch_size,
-                    epochs=FLAGS.num_epochs,
-                    training_now=True,
-                    validate_incrementally=FLAGS.validate_incrementally,
-                    X_eval=X_eval,
-                    y_eval=y_eval,
-                    print_every=1,
-                    plot_losses=FLAGS.plot_losses,
-                    plot_accuracies=FLAGS.plot_accuracies,
-                    results_dir=FLAGS.results_dir
+                    ACTIONS,
+                    e=0.25,
                 )
 
             # Save model

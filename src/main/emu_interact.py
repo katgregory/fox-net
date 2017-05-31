@@ -7,12 +7,15 @@ from matplotlib import pyplot as plt
 
 
 class FrameReader():
-	def __init__(self):
+	def __init__(self, out_height, out_width):
 		self.WIDTH = 640
 		self.HEIGHT = 480
 		self.DEPTH = 3
 		self.BUF_SIZE = (self.WIDTH*self.HEIGHT*self.DEPTH)
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+		self.out_height = out_height
+		self.out_width = out_width
 
 		self._launch_socket()
 
@@ -28,7 +31,7 @@ class FrameReader():
 				print(".")
 				time.sleep(0.2)
 
-	def read_frame(self, img_height, img_width):
+	def read_frame(self):
 		toread = self.BUF_SIZE
 		buf = bytearray(self.BUF_SIZE)
 		view = memoryview(buf)
@@ -40,11 +43,8 @@ class FrameReader():
 
 		img_flat = np.frombuffer(buf[::-1], dtype=np.uint8)
 		img = np.reshape(img_flat, (self.HEIGHT, self.WIDTH, self.DEPTH))[:,::-1,:]
-		img = imresize(img, (img_height, img_width, self.DEPTH))
+		img = imresize(img, (self.out_height, self.out_width, self.DEPTH))
 
-		# plt.ion()
-		# plt.imshow(img)
-		# plt.show()
 		img = np.expand_dims(img, axis=0)
 
 		return img
@@ -56,8 +56,7 @@ class FrameReader():
 			's': 0xb0000000, 
 			'd': 0x500000, 
 			'j': 0x80, 
-			# 'l': 0x10,
-			'l': 0, 
+			'l': 0x10,
 			'n': 0
 		}
 		self.s.send(struct.pack('I',action_map[action]))
