@@ -24,7 +24,7 @@ class FrameReader():
 		for i in range(100):
 			print(i)
 			try:
-				self.s.connect(("localhost", 11111))
+				self.s.connect(("10.34.245.84", 11111))
 				print('Socket connected successfully')
 				break
 			except:
