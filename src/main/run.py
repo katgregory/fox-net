@@ -5,7 +5,7 @@ import tensorflow as tf
 from data import load_datasets
 from foxnet_model import FoxNetModel
 from emu_interact import FrameReader
-from visualizers import FrameDisplayer
+#from visualizers import FrameDisplayer
 from scipy.misc import imresize
 
 
@@ -75,7 +75,7 @@ def run_model(train_dataset, eval_dataset, lr):
     if FLAGS.load_model:
         # Create an object to get emulator frames
         frame_reader = FrameReader()
-        frame_displayer = FrameDisplayer()
+#        frame_displayer = FrameDisplayer()
 
         # Load the model
         model_dir = './models/%s' % (FLAGS.model_dir)
@@ -86,7 +86,7 @@ def run_model(train_dataset, eval_dataset, lr):
             if not sv.should_stop():
                 while True:
                     X_emu = frame_reader.read_frame(FLAGS.image_height, FLAGS.image_width)
-                    frame_displayer.display_frame(X_emu)
+#                    frame_displayer.display_frame(X_emu)
                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
                     action_idx = np.argmax(pred)
                     action = ACTIONS[action_idx]
