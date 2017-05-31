@@ -123,8 +123,8 @@ def main():
 		s.send(struct.pack('I',0))
 		# Save labeled image
 
-		# if save_frame_decision(keys):
-		save_frame(frame, keys, frame_num)
+		if save_frame_decision(keys):
+			save_frame(frame, keys, frame_num)
 
 		# Update frame counter
 		frame_num = update_frame_num(frame_num)
