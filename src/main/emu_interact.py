@@ -21,6 +21,7 @@ class FrameReader():
 
 	def _launch_socket(self):
 		# Wait for the emulator to connect
+		print(socket.gethostname())
 		for i in range(100):
 			print(i)
 			try:
