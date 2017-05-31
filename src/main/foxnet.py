@@ -100,7 +100,6 @@ class FoxNet(object):
             activation = tf.nn.relu
         )
 
-        print(conv3.get_shape())
         magic_number = 196608
         conv3_flat = tf.reshape(conv3, [-1, magic_number])
 
