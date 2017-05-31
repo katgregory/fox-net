@@ -12,7 +12,7 @@ from scipy.misc import imresize
 # COMMAND LINE ARGUMENTS
 tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
-tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn") 
+tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn") 
 tf.app.flags.DEFINE_bool("validate", False, "")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
