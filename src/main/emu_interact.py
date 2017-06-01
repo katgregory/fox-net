@@ -31,7 +31,6 @@ class FrameReader():
 			except:
 				print(".")
 				time.sleep(0.2)
-		self.s.connect((socket.gethostname(), 11111))
 
 	def read_frame(self):
 		toread = self.BUF_SIZE
