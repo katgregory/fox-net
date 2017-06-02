@@ -86,7 +86,7 @@ def run_model(train_dataset, eval_dataset, lr):
         with sv.managed_session() as sess:
             if not sv.should_stop():
                 while True:
-                    X_emu = frame_reader.read_frame()
+                    X_emu, _ = frame_reader.read_frame()
 #                    frame_displayer.display_frame(X_emu)
                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
                     action_idx = np.argmax(pred)

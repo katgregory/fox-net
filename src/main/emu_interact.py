@@ -43,12 +43,12 @@ class FrameReader():
 			toread -= nbytes
 
 		img_flat = np.frombuffer(buf[::-1], dtype=np.uint8)
-		img = np.reshape(img_flat, (self.HEIGHT, self.WIDTH, self.DEPTH))[:,::-1,:]
-		img = imresize(img, (self.out_height, self.out_width, self.DEPTH))
+		full_img = np.reshape(img_flat, (self.HEIGHT, self.WIDTH, self.DEPTH))[:,::-1,:]
+		img = imresize(full_img, (self.out_height, self.out_width, self.DEPTH))
 
 		img = np.expand_dims(img, axis=0)
 
-		return img
+		return img, full_img
 
 	def send_action(self, action):
 		action_map = {

@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from emu_interact import FrameReader
 from collections import deque
+from health.health import HealthExtractor
 
 ph = tf.placeholder
 
@@ -182,11 +183,13 @@ class FoxNetModel(object):
     def run_online(self, sess, actions, e, out_height, out_width):
         # Initialize emulator transfers
         frame_reader = FrameReader(out_height, out_width)
+        health_extractor = HealthExtractor()
         # reward_extractor = RewardExtractor() # Uncomment when templates available
 
         total_reward = 0
 
-        state = frame_reader.read_frame()
+        state, full_image = frame_reader.read_frame()
+        print(state.shape)
         while True:
             # replay memory stuff
 
@@ -206,12 +209,14 @@ class FoxNetModel(object):
             frame_reader.send_action(actions[action])
 
             # Get next state
-            new_state = frame_reader.read_frame()
+            new_state, full_image = frame_reader.read_frame()
 
             # TODO: get reward, uncomment when templates available
+            health_reward = health_extractor(full_image, offline=False)
             # reward = reward_extractor.get_reward(new_state)
-            reward = np.random.uniform()
 
+            reward = health_reward
+            print(reward)
             # TODO: implement or remove done
             done = False
 
