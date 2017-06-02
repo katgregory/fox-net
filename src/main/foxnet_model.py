@@ -182,6 +182,9 @@ class FoxNetModel(object):
         return total_loss, total_correct
 
     def run_online(self, sess, actions, e, out_height, out_width):
+        gamma = 0.1
+        num_actions = len(actions)
+
         # Initialize emulator transfers
         frame_reader = FrameReader(out_height, out_width)
         health_extractor = HealthExtractor()
@@ -190,14 +193,15 @@ class FoxNetModel(object):
         total_reward = 0
 
         state, full_image = frame_reader.read_frame()
-        print(state.shape)
         while True:
-            # replay memory stuff
+            # TODO: replay memory stuff
+
+            feed_dict = {self.X: state, self.is_training: False}
+            q_values = sess.run(self.probs, feed_dict = feed_dict)
+            print("q values: ", q_values)
 
             # e-greedy exploration
             if np.random.uniform() >= e:
-                feed_dict = {self.X: state, self.is_training: False}
-                q_values = sess.run(self.probs, feed_dict = feed_dict)
                 action = np.argmax(q_values)
                 # action = actions[action_idx]
             else:
@@ -217,7 +221,7 @@ class FoxNetModel(object):
             score_reward = reward_extractor.get_reward(full_image)
 
             reward = health_reward + score_reward
-            
+
             # TODO: implement or remove done
             done = False
 
@@ -226,6 +230,9 @@ class FoxNetModel(object):
             state = new_state
 
             # TODO: Perform training step
+            Q_samp = reward + gamma * tf.reduce_max(q_values)
+            action_mask = tf.one_hot(indices=action, depth=num_actions)
+            self.loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask))**2)
 
             # count reward
             total_reward += reward

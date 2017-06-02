@@ -42,8 +42,11 @@ tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
-ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
+# ACTIONS = ['w', 'a', 's', 'd', 'j', 'l', 'n']
+# ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'start', 'do nothing']
+
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'n']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -120,7 +123,7 @@ def run_model(train_dataset, eval_dataset, lr):
                 foxnet.run_online(
                     sess,
                     ACTIONS,
-                    0.05,
+                    0.5,
                     FLAGS.image_height,
                     FLAGS.image_width,
                 )
