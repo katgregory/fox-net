@@ -17,9 +17,6 @@ class HealthExtractor():
 			image = input_image.astype(float)
 
 		self.get_cur_healthbar(image)
-		plt.ion()
-		plt.imshow(self.curhealth)
-		plt.show()
 		return self.compare_health()
 
 	def get_cur_healthbar(self, image):

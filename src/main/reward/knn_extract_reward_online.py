@@ -5,12 +5,12 @@ import math
 import numpy as np
 import util
 from scipy.stats.stats import pearsonr
-from optparse import OptionParser
 
 class RewardExtractor():
     def __init__(self):
         template_dir = './templates'
-        self.templates = load_template_images(template_dir)
+        self.templates = self.load_template_images(template_dir)
+        print(self.templates.size)
 
     def load_template_images(self, dir, filter_image_flag=True):
         '''
@@ -51,15 +51,15 @@ class RewardExtractor():
         # Classify each image.
         labels = []
         for _, hundreds, tens, ones in input_image:
-            labels.append((classify_digit_pearson(hundreds, template_mat),
-                           classify_digit_pearson(tens, template_mat),
-                           classify_digit_pearson(ones, template_mat)))
+            labels.append((self.classify_digit_pearson(hundreds, template_mat),
+                           self.classify_digit_pearson(tens, template_mat),
+                           self.classify_digit_pearson(ones, template_mat)))
 
         return labels
 
     def get_reward(self, input_image):
         templates = self.templates
-        labels = classify_image(input_image)
+        labels = self.classify_image(input_image)
 
         template_values = []
         for template_filename, _ in templates:
