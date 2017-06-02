@@ -3,14 +3,20 @@ import glob
 import os
 import math
 import numpy as np
-import util
+from reward import utils
 from scipy.stats.stats import pearsonr
+import os
+
+Y_MIN = 65
+Y_SIZE = 31
+X_MIN = 47
+X_SIZE = 26
 
 class RewardExtractor():
     def __init__(self):
-        template_dir = './templates'
+        template_dir = './reward/templates/*'
         self.templates = self.load_template_images(template_dir)
-        print(self.templates.size)
+        print(len(self.templates))
 
     def load_template_images(self, dir, filter_image_flag=True):
         '''
@@ -18,6 +24,7 @@ class RewardExtractor():
         (filename, image as a numpy array)
         '''
         image_filenames = glob.glob(dir)
+        print(image_filenames)
 
         images = []
         for image_filename in image_filenames:
@@ -28,11 +35,31 @@ class RewardExtractor():
             image = cv2.imread(image_filename)
 
             if filter_image_flag:
-                image = util.filter_image(image)
+                image = utils.filter_image(image)
 
             images.append((image_filename, image.flatten()))
 
         return images
+
+    def modify_image(self, image, filter_image_flag=True):
+        hundreds = image[Y_MIN : Y_MIN + Y_SIZE, X_MIN : X_MIN + X_SIZE]
+        tens = image[Y_MIN : Y_MIN + Y_SIZE, X_MIN + X_SIZE : X_MIN + 2 * X_SIZE]
+        ones = image[Y_MIN : Y_MIN + Y_SIZE, X_MIN + 2 * X_SIZE : X_MIN + 3 * X_SIZE]
+
+        if filter_image_flag:
+            hundreds = utils.filter_image(hundreds)
+            tens = utils.filter_image(tens)
+            ones = utils.filter_image(ones)
+
+        hundreds = hundreds.flatten()
+        tens = tens.flatten()
+        ones = ones.flatten()
+
+        image = []
+        image.append((hundreds))
+        image.append((tens))
+        image.append((ones))
+        return image
 
     def classify_image(self, input_image):
         '''
@@ -41,6 +68,7 @@ class RewardExtractor():
         correlation.
         '''
         templates = self.templates
+        input_image = self.modify_image(input_image)
 
         # Normalize templates and stack them side-by-side in a matrix.
         template_mat = np.zeros(shape=(templates[0][1].size, len(templates)))
@@ -50,8 +78,11 @@ class RewardExtractor():
 
         # Classify each image.
         labels = []
-        for _, hundreds, tens, ones in input_image:
-            labels.append((self.classify_digit_pearson(hundreds, template_mat),
+        hundreds = input_image[0]
+        tens = input_image[1]
+        ones = input_image[2]
+
+        labels.append((self.classify_digit_pearson(hundreds, template_mat),
                            self.classify_digit_pearson(tens, template_mat),
                            self.classify_digit_pearson(ones, template_mat)))
 
@@ -66,12 +97,12 @@ class RewardExtractor():
             template_name = template_filename[template_filename.rfind('/') + 1:template_filename.rfind('.')]
             template_values.append(int(template_name))
 
-        if None in labels[index]:
+        if None in labels[0]:
             reward = 0
         else:
-            reward = template_values[labels[index][0]] * 100 + \
-                     template_values[labels[index][1]] * 10 + \
-                     template_values[labels[index][2]]
+            reward = template_values[labels[0][0]] * 100 + \
+                     template_values[labels[0][1]] * 10 + \
+                     template_values[labels[0][2]]
 
             # Hack to correct for 9's being replaced with 0's in the hundreds digit.
             if reward > 900:

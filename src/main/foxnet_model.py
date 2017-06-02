@@ -214,7 +214,7 @@ class FoxNetModel(object):
 
             # TODO: get reward, uncomment when templates available
             health_reward = health_extractor(full_image, offline=False)
-            score_reward = reward_extractor.get_reward(new_state)
+            score_reward = reward_extractor.get_reward(full_image)
 
             reward = health_reward + score_reward
             print(health_reward, score_reward)
