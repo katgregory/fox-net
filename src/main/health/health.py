@@ -12,11 +12,14 @@ class HealthExtractor():
 
 	def __call__(self, input_image, offline=True):
 		if offline:
-			image = imread(input_image).astype(float)
+			image = imread(input_image)
 		else:
-			image = input_image.astype(float)
+			# switch BGR to RGB
+			image = input_image[..., [2,1,0]]
 
 		self.get_cur_healthbar(image)
+
+		roll = np.random.uniform()
 		return self.compare_health()
 
 	def get_cur_healthbar(self, image):

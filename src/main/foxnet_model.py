@@ -217,7 +217,7 @@ class FoxNetModel(object):
             score_reward = reward_extractor.get_reward(full_image)
 
             reward = health_reward + score_reward
-            print(health_reward, score_reward)
+            
             # TODO: implement or remove done
             done = False
 
