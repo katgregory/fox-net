@@ -249,8 +249,8 @@ class FoxNetModel(object):
             Q_samp = reward + gamma * tf.reduce_max(q_values, axis=1)
             action_mask = tf.one_hot(indices=action, depth=num_actions)
             self.loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask, axis=1))**2)
-            print("loss: ", self.loss.eval())
-            print("batch reward:, ", batch_reward)
+            print("loss: ", self.loss.eval(session=sess))
+            print("batch reward: ", batch_reward)
 
 
 

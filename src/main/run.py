@@ -22,6 +22,7 @@ tf.app.flags.DEFINE_bool("plot_losses", True, "")
 tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
+tf.app.flags.DEFINE_bool("save_model", True, "")
 tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 
@@ -76,6 +77,7 @@ def run_model(train_dataset, eval_dataset, lr):
     X_train, y_train = train_dataset
     X_eval, y_eval = eval_dataset
 
+    # Load pretrained model
     if FLAGS.load_model:
         # Create an object to get emulator frames
         frame_reader = FrameReader(FLAGS.image_height, FLAGS.image_width)
@@ -98,48 +100,51 @@ def run_model(train_dataset, eval_dataset, lr):
                     frame_reader.send_action(action)
     else:
         # Train a new Model
-        with tf.Session() as sess:
-            initialize_model(sess, foxnet)
-            print('Training...')
-            if FLAGS.train_online == False:
+        sess = tf.Session()
+        initialize_model(sess, foxnet)
+        print('Training...')
 
-                foxnet.run(
-                        sess,
-                        X_train,
-                        y_train,
-                        FLAGS.batch_size,
-                        epochs=FLAGS.num_epochs,
-                        training_now=True,
-                        validate_incrementally=FLAGS.validate_incrementally,
-                        X_eval=X_eval,
-                        y_eval=y_eval,
-                        print_every=1,
-                        plot_losses=FLAGS.plot_losses,
-                        plot_accuracies=FLAGS.plot_accuracies,
-                        results_dir=FLAGS.results_dir
-                    )
+        foxnet.run(
+                sess,
+                X_train,
+                y_train,
+                FLAGS.batch_size,
+                epochs=FLAGS.num_epochs,
+                training_now=True,
+                validate_incrementally=FLAGS.validate_incrementally,
+                X_eval=X_eval,
+                y_eval=y_eval,
+                print_every=1,
+                plot_losses=FLAGS.plot_losses,
+                plot_accuracies=FLAGS.plot_accuracies,
+                results_dir=FLAGS.results_dir
+            )
 
-            else:
-                foxnet.run_online(
-                    sess,
-                    ACTIONS,
-                    0.1,
-                    FLAGS.batch_size,
-                    FLAGS.image_height,
-                    FLAGS.image_width,
-                )
+    if FLAGS.train_online == True:
+        foxnet.run_online(
+            sess,
+            ACTIONS,
+            0.25,
+            FLAGS.batch_size,
+            FLAGS.image_height,
+            FLAGS.image_width,
+        )
 
-            # Save model
-            model_dir = './models/%s' % (FLAGS.model_dir)
-            model_name = '%s' % (FLAGS.model_dir)
-            if not os.path.exists(model_dir):
-                os.makedirs(model_dir)
-            saver = tf.train.Saver()
-            saver.save(sess, model_dir + '/' + model_name)
-            print('Saved model to dir: %s' % model_dir)
+    if FLAGS.save_model == True:
+        # Save model
+        model_dir = './models/%s' % (FLAGS.model_dir)
+        model_name = '%s' % (FLAGS.model_dir)
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+        saver = tf.train.Saver()
+        saver.save(sess, model_dir + '/' + model_name)
+        print('Saved model to dir: %s' % model_dir)
 
-            print('Validating...')
-            foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
+        print('Validating...')
+        foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
+
+    # Close session
+    sess.close()
 
 def get_data_params():
     return {
