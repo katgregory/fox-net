@@ -181,62 +181,76 @@ class FoxNetModel(object):
 
         return total_loss, total_correct
 
-    def run_online(self, sess, actions, e, out_height, out_width):
+    def run_online(self, sess, action_list, e, batch_size, out_height, out_width):
         gamma = 0.1
-        num_actions = len(actions)
+        num_actions = len(action_list)
 
         # Initialize emulator transfers
         frame_reader = FrameReader(out_height, out_width)
         health_extractor = HealthExtractor()
-        reward_extractor = RewardExtractor() # Uncomment when templates available
+        reward_extractor = RewardExtractor()
 
         total_reward = 0
 
+        # Keep full image for reward extraction
         state, full_image = frame_reader.read_frame()
         while True:
-            # TODO: replay memory stuff
+            q_values = []
+            rewards = []
+            actions = []
+            batch_reward = 0
 
-            feed_dict = {self.X: state, self.is_training: False}
-            q_values = sess.run(self.probs, feed_dict = feed_dict)
-            print("q values: ", q_values)
+            for i in np.arange(batch_size):
+                # TODO: replay memory stuff
 
-            # e-greedy exploration
-            if np.random.uniform() >= e:
-                action = np.argmax(q_values)
-                # action = actions[action_idx]
-            else:
-                action = np.random.choice(np.arange(len(actions)))
-            print("action " + str(actions[action]))
+                feed_dict = {self.X: state, self.is_training: False}
+                q_values.append(sess.run(self.probs, feed_dict = feed_dict))
 
-            # TODO: store q values
+                # e-greedy exploration
+                if np.random.uniform() >= e:
+                    action = np.argmax(q_values[i])
+                else:
+                    action = np.random.choice(np.arange(len(action_list)))
+                actions.append(action)
 
-            # Send action to emulator
-            frame_reader.send_action(actions[action])
+                # TODO: store q values
 
-            # Get next state
-            new_state, full_image = frame_reader.read_frame()
+                # Send action to emulator
+                frame_reader.send_action(action_list[action])
 
-            # TODO: get reward, uncomment when templates available
-            health_reward = health_extractor(full_image, offline=False)
-            score_reward = reward_extractor.get_reward(full_image)
+                # Get next state
+                new_state, full_image = frame_reader.read_frame()
 
-            reward = health_reward + score_reward
+                # Get health reward
+                health_reward = health_extractor(full_image, offline=False)
 
-            # TODO: implement or remove done
-            done = False
+                # Get score reward
+                score_reward = reward_extractor.get_reward(full_image)
 
-            # TODO: store transition
+                reward = health_reward + score_reward
+                rewards.append(reward)
 
-            state = new_state
+                # count reward
+                batch_reward += reward
+
+
+                # TODO: implement done mask?
+
+                # TODO: store transition
+
+                state = new_state
 
             # TODO: Perform training step
-            Q_samp = reward + gamma * tf.reduce_max(q_values)
+
+            q_values = tf.stack(q_values)
+            rewards = tf.stack(rewards)
+            actions = tf.stack(actions)
+
+            Q_samp = reward + gamma * tf.reduce_max(q_values, axis=1)
             action_mask = tf.one_hot(indices=action, depth=num_actions)
-            self.loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask))**2)
-
-            # count reward
-            total_reward += reward
-
+            self.loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask, axis=1))**2)
+            print("loss: ", self.loss.eval())
+            print("batch reward:, ", batch_reward)
 
 
 

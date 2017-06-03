@@ -23,14 +23,13 @@ class FrameReader():
 		# Wait for the emulator to connect
 		print(socket.gethostname())
 		for i in range(100):
-			print(i)
 			try:
 				self.s.connect((socket.gethostname(), 11111))
 				print('Socket connected successfully')
 				break
 			except:
-				print(".")
 				time.sleep(0.2)
+				print("Retrying socket: " + str(i) + "/100")
 
 	def read_frame(self):
 		toread = self.BUF_SIZE
@@ -57,8 +56,8 @@ class FrameReader():
 			's': 0xb0000000, 
 			'd': 0x500000, 
 			'j': 0x80, 
-			# 'l': 0x10,
-			'l': 0,
+			'l': 0x10,
+			# 'l': 0,
 			'n': 0
 		}
 		self.s.send(struct.pack('I',action_map[action]))

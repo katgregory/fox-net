@@ -109,9 +109,9 @@ class FoxNet(object):
             activation = tf.nn.relu
         )
 
-        logits = tf.layers.dense(
+        y_out = tf.layers.dense(
             inputs = affine_relu,
             units = n_labels
         )
 
-        return logits
+        return y_out

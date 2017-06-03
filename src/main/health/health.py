@@ -7,7 +7,7 @@ class HealthExtractor():
 		self.ul = [42, 56]
 		self.br = [53, 149]
 		self.totalpixels = (self.br[1]-self.ul[1])*(self.br[0]-self.ul[0])
-		self.maxhealth = imread('/home/kevin/Desktop/fox-net/src/main/health/healthbar.png').astype(float)
+		self.maxhealth = imread('./health/healthbar.png').astype(float)
 		self.thresh = 25
 
 	def __call__(self, input_image, offline=True):
