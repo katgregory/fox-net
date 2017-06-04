@@ -45,7 +45,7 @@ class FoxNetModel(object):
         # The first dim is None, and gets sets automatically based on batch size fed in
         # count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
         if (multi_frame_state):
-            self.X = ph(tf.float32, [None, height, width, n_channels, frames_per_state])
+            self.X = ph(tf.float32, [None, frames_per_state, height, width, n_channels])
         else:
             self.X = ph(tf.float32, [None, height, width, n_channels])
         self.y = ph(tf.int64, [None])
@@ -57,7 +57,7 @@ class FoxNetModel(object):
         if (model == "fc"): # Only works if !multi_frame_state
             self.probs = foxnet.fully_connected(self.X, self.y, self.num_actions)
         elif (model == "simple_cnn"): # Only works if !multi_frame_state
-            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, self.is_training)
+            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, multi_frame_state, frames_per_state, self.is_training)
         elif (model == "dqn"):
             self.probs = foxnet.DQN(self.X, self.y, self.num_actions)
         else:
