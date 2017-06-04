@@ -89,7 +89,7 @@ def run_model():
     # Load pretrained model
     if FLAGS.load_model:
         # Create an object to get emulator frames
-        frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
+        # frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 
         # Load the model
         model_dir = './models/%s' % (FLAGS.model_dir)

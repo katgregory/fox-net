@@ -14,7 +14,7 @@ RGB_TOL = 15
 
 
 def iteration_from_filename(filename):
-    name = filename[filename.rfind('/') + 1:]
+    name = filename[filename.rfind('/i=') + 3:]
     iteration = name[:name.find('_')]
     return int(iteration)
 

@@ -3,11 +3,11 @@ from scipy.misc import imread
 from matplotlib import pyplot as plt
 
 class HealthExtractor():
-	def __init__(self):
+	def __init__(self, healthbar_path='./health/healthbar.png'):
 		self.ul = [42, 56]
 		self.br = [53, 149]
 		self.totalpixels = (self.br[1]-self.ul[1])*(self.br[0]-self.ul[0])
-		self.maxhealth = imread('./health/healthbar.png').astype(float)
+		self.maxhealth = imread(healthbar_path).astype(float)
 		self.thresh = 25
 
 	def __call__(self, input_image, offline=True):
@@ -34,4 +34,6 @@ class HealthExtractor():
 		# Hack to prevent background from registering on non-health screens
 		if health_ratio <= 0.05:
 			health_ratio = 0.0
+
+		health_ratio = int(100*health_ratio)
 		return health_ratio
