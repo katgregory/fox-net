@@ -37,8 +37,12 @@ class DataManager:
         else:
             train_dataset, eval_dataset = load_datasets('dev', data_params)
 
-        self.s_train, self.a_train = train_dataset
-        self.s_eval, self.a_eval = eval_dataset
+        self.s_train, self.a_train, scores_train, h_train = train_dataset
+        self.s_eval, self.a_eval, scores_test, h_test = eval_dataset
+
+        # Compute the reward given scores and health. Currently, this just adds the two, weighting each one equally.
+        self.r_train = scores_train + h_train
+        self.r_test = scores_test + h_test
 
         self.batch_size = batch_size
 
@@ -113,6 +117,7 @@ class DataManager:
 
             s_batch = self.s_train[idx, :]
             a_batch = self.a_train[idx]
+            r_batch = self.r_train[idx]
             a_eval_batch = self.a_eval[idx]
 
         return s_batch, a_batch, r_batch, a_eval_batch

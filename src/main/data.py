@@ -12,12 +12,14 @@ from tqdm import *
 def load_datasets(tier, params):
     print("##### LOADING DATA ########################################")
     # Matching group 1 is frame number, matching group 2 is action
-    pattern = re.compile('i=(\d+)_a=(.*).png')
+    pattern = re.compile('i=(\d+)_a=(\d+)_s=(\d+)_h=(\d+).png')
 
     # Load images
     print("Loading images:")
     images = []
-    labels = []
+    actions = []
+    scores = []
+    healths = []
     action_counter = Counter()
 
     print(params['actions'])
@@ -32,6 +34,9 @@ def load_datasets(tier, params):
             match = re.search(pattern, filename)
             frame_number = match.group(1)
             action = match.group(2)
+            score = match.group(3)
+            health = match.group(4)
+            
             # Convert image and add to collection
             # Shape of img is (480, 640, 3)
 
@@ -40,8 +45,10 @@ def load_datasets(tier, params):
 
             if img is not None and action in params["actions"]:
                 images.append(img)
-                labels.append(params["actions"].index(action))
+                actions.append(params["actions"].index(action))
                 action_counter[action] += 1
+                scores.append(score)
+                healths.append(health)
     print("Loaded " + str(len(images)) + " images.")
     print("Action counts: " + str(action_counter))
 
@@ -55,30 +62,41 @@ def load_datasets(tier, params):
         for i in tqdm(xrange(len(images) - n_frames + 1)):
             state = tuple(images[x][None, :, :, :] for x in xrange(i, i + n_frames))
             states.append(np.concatenate(state, axis=0))
-        labels = labels[n_frames - 1:] # Also remove (n_frames - 1) labels
+        actions = actions[n_frames - 1:] # Also remove (n_frames - 1) actions
+        scores = scores[n_frames - 1:] # Also remove (n_frames - 1) actions
+        healths = healths[n_frames - 1:] # Also remove (n_frames - 1) actions
         print("Created " + str(len(states)) + " states.")
     else: # Final state has shape (480, 640, 3)
         states = images
 
     # Partition
-    X_train, X_test, y_train, y_test = train_test_split(states, labels, test_size=params["eval_proportion"], random_state=42)
-    print("Train count: " + str(len(X_train)) + ", Test count: " + str(len(X_test)))
+    s_train, s_test, a_train, a_test, scores_train, scores_test, h_train, h_test = \
+        train_test_split(states, actions, scores, healths, test_size=params["eval_proportion"], random_state=42)
+    print("Train count: " + str(len(s_train)) + ", Test count: " + str(len(s_test)))
 
     # Convert from list to numpy array
     print("Stacking...")
-    X_train = np.stack(X_train)
-    X_test = np.stack(X_test)
-    y_train = np.stack(y_train)
-    y_test = np.stack(y_test)
+    s_train = np.stack(s_train)
+    s_test = np.stack(s_test)
+    a_train = np.stack(a_train)
+    a_test = np.stack(a_test)
+    scores_train = np.stack(scores_train)
+    scores_test = np.stack(scores_test)
+    h_train = np.stack(h_train)
+    h_test = np.stack(h_test)
 
     # Print stats
     # Data: count (in train/test set) [x 3 (num frames) if multi_frame_state] x 48 (height) x 68 (width) x 3 (channels)
     # Labels: count (in train/test set) x 1 (index of action in ACTIONS array)
-    print('Train data shape: ' + str(X_train.shape))
-    print('Train labels shape: ' + str(y_train.shape))
-    print('Test data shape: ' + str(X_test.shape))
-    print('Test labels shape: ' + str(y_test.shape))
+    print('Train states shape: ' + str(s_train.shape))
+    print('Train actions shape: ' + str(a_train.shape))
+    print('Train scores shape: ' + str(scores_train.shape))
+    print('Train healths shape: ' + str(h_train.shape))
+    print('Test states shape: ' + str(s_test.shape))
+    print('Test actions shape: ' + str(a_test.shape))
+    print('Test scores shape: ' + str(scores_test.shape))
+    print('Test healths shape: ' + str(h_test.shape))
     print("##### DONE LOADING DATA ###################################")
 
     # Returns
-    return (X_train, y_train), (X_test, y_test)
+    return (s_train, a_train, scores_train, h_train), (s_test, a_test, scores_test, h_test)
