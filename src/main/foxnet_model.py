@@ -24,6 +24,7 @@ class FoxNetModel(object):
 
     def __init__(self,
                 model,
+                qlearning,
                 lr,
                 height,
                 width,
@@ -38,6 +39,7 @@ class FoxNetModel(object):
         self.lr = lr
         self.verbose = verbose
         self.actions = actions
+        self.num_actions = len(actions)
 
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
@@ -61,14 +63,28 @@ class FoxNetModel(object):
         else:
             raise ValueError("Invalid model specified. Valid options are: 'fcc', 'simple_cnn', 'dqn'")
 
-        # Define loss
-        onehot_labels = tf.one_hot(self.y, len(actions))
-        total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.probs)
-        self.loss = tf.reduce_mean(total_loss)
+        # Set up loss for Q-learning
+        if qlearning:
+            self.rewards = ph(tf.float32, [None], name='rewards')
+            # self.q_values = ph(tf.float32, [None, self.num_actions], name='q_values')
+            self.q_values = self.probs
+            self.action = ph(tf.uint8, [None, self.num_actions], name='action')
+
+            Q_samp = self.rewards + self.lr * tf.reduce_max(self.q_values, axis=1)
+            action_mask = tf.one_hot(indices=self.action, depth=self.num_actions)
+            self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
+            
+        # Otherwise, classification
+        else:
+            # Define loss
+            onehot_labels = tf.one_hot(self.y, len(actions))
+            total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.probs)
+            self.loss = tf.reduce_mean(total_loss)
 
         # Define optimizer
-        optimizer = tf.train.AdamOptimizer(lr) # Select optimizer and set learning rate
+        optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
         self.train_step = optimizer.minimize(self.loss)
+
 
     #############################
     # RUN GRAPH
@@ -181,9 +197,15 @@ class FoxNetModel(object):
 
         return total_loss, total_correct
 
-    def run_online(self, sess, action_list, e, batch_size, out_height, out_width):
-        gamma = 0.1
-        num_actions = len(action_list)
+    def run_online(self, 
+                   sess, 
+                   actions, 
+                   e, 
+                   batch_size, 
+                   out_height, 
+                   out_width, 
+                   training_now=False
+                   ):
 
         # Initialize emulator transfers
         frame_reader = FrameReader(out_height, out_width)
@@ -191,32 +213,38 @@ class FoxNetModel(object):
         reward_extractor = RewardExtractor()
 
         total_reward = 0
-
+        states = []
         # Keep full image for reward extraction
         state, full_image = frame_reader.read_frame()
+        states.append(state)
+
         while True:
-            q_values = []
-            rewards = []
-            actions = []
+            reward_list = []
+            action_list = []
+            state_list = []
             batch_reward = 0
 
+            # Collect a batch
             for i in np.arange(batch_size):
                 # TODO: replay memory stuff
 
+                # Save states for batch forward pass
+                state_list.append(state)
+
                 feed_dict = {self.X: state, self.is_training: False}
-                q_values.append(sess.run(self.probs, feed_dict = feed_dict))
+                q_values_it = sess.run(self.probs, feed_dict = feed_dict)
 
                 # e-greedy exploration
                 if np.random.uniform() >= e:
-                    action = np.argmax(q_values[i])
+                    action = np.argmax(q_values_it)
                 else:
-                    action = np.random.choice(np.arange(len(action_list)))
-                actions.append(action)
+                    action = np.random.choice(np.arange(self.num_actions))
+                action_list.append(action)
 
                 # TODO: store q values
 
                 # Send action to emulator
-                frame_reader.send_action(action_list[action])
+                frame_reader.send_action(actions[action])
 
                 # Get next state
                 new_state, full_image = frame_reader.read_frame()
@@ -228,7 +256,7 @@ class FoxNetModel(object):
                 score_reward = reward_extractor.get_reward(full_image)
 
                 reward = health_reward + score_reward
-                rewards.append(reward)
+                reward_list.append(reward)
 
                 # count reward
                 batch_reward += reward
@@ -240,16 +268,36 @@ class FoxNetModel(object):
 
                 state = new_state
 
-            # TODO: Perform training step
+            # Perform training step
 
-            q_values = tf.stack(q_values)
-            rewards = tf.stack(rewards)
-            actions = tf.stack(actions)
+            # Do a batch forwad pass
+            # q_values = tf.stack(q_value_list)
+            rewards = tf.stack(reward_list)
+            actions = tf.stack(action_list)
+            states = tf.stack(state_list)
 
-            Q_samp = reward + gamma * tf.reduce_max(q_values, axis=1)
-            action_mask = tf.one_hot(indices=action, depth=num_actions)
-            self.loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask, axis=1))**2)
-            print("loss: ", self.loss.eval(session=sess))
+            # feed_dict = {
+            #     self.X: states
+            # }
+
+            # q_values = sess.run(self.probs, feed_dict = feed_dict)
+
+            # # Q_samp = rewards + self.lr * tf.reduce_max(q_values, axis=1)
+            # # action_mask = tf.one_hot(indices=action, depth=self.num_actions)
+
+            variables = [self.loss, self.train_step]
+
+            feed_dict = {
+                self.X: states,
+                # self.q_values: q_values,
+                self.rewards: rewards,
+                self.actions: actions,
+                self.is_training: training_now}
+
+            loss = sess.run(variables, feed_dict = feed_dict)
+            # loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask, axis=1))**2)
+            
+            print("loss: ", loss)
             print("batch reward: ", batch_reward)
 
 

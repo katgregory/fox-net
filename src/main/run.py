@@ -25,6 +25,7 @@ tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_bool("save_model", True, "")
 tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files")
 tf.app.flags.DEFINE_bool("train_online", False, "")
+tf.app.flags.DEFINE_bool("qlearning", False, "")
 
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -63,6 +64,7 @@ def run_model(train_dataset, eval_dataset, lr):
 
     foxnet = FoxNetModel(
                 FLAGS.model,
+                FLAGS.qlearning,
                 FLAGS.lr,
                 FLAGS.image_height,
                 FLAGS.image_width,
@@ -90,6 +92,7 @@ def run_model(train_dataset, eval_dataset, lr):
         sv = tf.train.Supervisor(logdir=model_dir)
         with sv.managed_session() as sess:
             if not sv.should_stop():
+
                 while True:
                     X_emu, _ = frame_reader.read_frame()
 #                    frame_displayer.display_frame(X_emu)
@@ -104,32 +107,35 @@ def run_model(train_dataset, eval_dataset, lr):
         initialize_model(sess, foxnet)
         print('Training...')
 
-        foxnet.run(
+        # If doing online Q-learning
+        if FLAGS.train_online == True:
+            foxnet.run_online(
                 sess,
-                X_train,
-                y_train,
+                ACTIONS,
+                0.1,
                 FLAGS.batch_size,
-                epochs=FLAGS.num_epochs,
-                training_now=True,
-                validate_incrementally=FLAGS.validate_incrementally,
-                X_eval=X_eval,
-                y_eval=y_eval,
-                print_every=1,
-                plot_losses=FLAGS.plot_losses,
-                plot_accuracies=FLAGS.plot_accuracies,
-                results_dir=FLAGS.results_dir
+                FLAGS.image_height,
+                FLAGS.image_width,
             )
 
-    if FLAGS.train_online == True:
-        foxnet.run_online(
-            sess,
-            ACTIONS,
-            0.25,
-            FLAGS.batch_size,
-            FLAGS.image_height,
-            FLAGS.image_width,
-        )
+        else:
+            foxnet.run(
+                    sess,
+                    X_train,
+                    y_train,
+                    FLAGS.batch_size,
+                    epochs=FLAGS.num_epochs,
+                    training_now=True,
+                    validate_incrementally=FLAGS.validate_incrementally,
+                    X_eval=X_eval,
+                    y_eval=y_eval,
+                    print_every=1,
+                    plot_losses=FLAGS.plot_losses,
+                    plot_accuracies=FLAGS.plot_accuracies,
+                    results_dir=FLAGS.results_dir
+                )
 
+    # Save the model
     if FLAGS.save_model == True:
         # Save model
         model_dir = './models/%s' % (FLAGS.model_dir)
@@ -140,8 +146,9 @@ def run_model(train_dataset, eval_dataset, lr):
         saver.save(sess, model_dir + '/' + model_name)
         print('Saved model to dir: %s' % model_dir)
 
-        print('Validating...')
-        foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
+    # Validate the model
+    # print('Validating...')
+    # foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
 
     # Close session
     sess.close()
