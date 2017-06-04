@@ -66,7 +66,6 @@ class FoxNetModel(object):
         # Set up loss for Q-learning
         if qlearning:
             self.rewards = ph(tf.float32, [None], name='rewards')
-            # self.q_values = ph(tf.float32, [None, self.num_actions], name='q_values')
             self.q_values = self.probs
             self.actions = ph(tf.uint8, [None], name='action')
 
@@ -269,36 +268,20 @@ class FoxNetModel(object):
 
             # Perform training step
 
-            # Do a batch forwad pass
-            # q_values = tf.stack(q_value_list)
-            # rewards = tf.stack(reward_list)
-            # actions = tf.stack(action_list)
-            # states = tf.stack(state_list)
-
 
             rewards = reward_list
             actions = action_list
             states  = state_list
-            # feed_dict = {
-            #     self.X: states
-            # }
-
-            # q_values = sess.run(self.probs, feed_dict = feed_dict)
-
-            # # Q_samp = rewards + self.lr * tf.reduce_max(q_values, axis=1)
-            # # action_mask = tf.one_hot(indices=action, depth=self.num_actions)
 
             variables = [self.loss, self.train_step]
 
             feed_dict = {
                 self.X: states,
-                # self.q_values: q_values,
                 self.rewards: rewards,
                 self.actions: actions,
                 self.is_training: training_now}
 
             loss = sess.run(variables, feed_dict = feed_dict)
-            # loss = tf.reduce_sum((Q_samp-tf.reduce_sum(q_values*action_mask, axis=1))**2)
             
             print("loss: ", loss)
             print("batch reward: ", batch_reward)
