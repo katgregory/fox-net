@@ -82,7 +82,7 @@ def run_model():
     # Initialize a data manager.
     data_manager = DataManager()
     if FLAGS.train_online:
-        data_manager.init_online(foxnet, FLAGS.batch_size, FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
+        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 

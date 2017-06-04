@@ -12,10 +12,12 @@ class DataManager:
     def __init__(self):
         self.is_online = False
 
-    def init_online(self, foxnet, batch_size, ip, image_height, image_width, epsilon):
+    def init_online(self, foxnet, session, batch_size, ip, image_height, image_width, epsilon):
         self.is_online = True
         self.foxnet = foxnet
+        self.session = session
         self.batch_size = batch_size
+        self.epsilon = epsilon
 
         # Initialize emulator transfers
         self.frame_reader = FrameReader(ip, image_height, image_width)
@@ -76,10 +78,10 @@ class DataManager:
                 state_list.extend(state)
 
                 feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
-                q_values_it = self.foxnet.session.run(self.foxnet.probs, feed_dict=feed_dict)
+                q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
 
                 # e-greedy exploration.
-                if np.random.uniform() >= e:
+                if np.random.uniform() >= self.epsilon:
                     action = np.argmax(q_values_it)
                 else:
                     action = np.random.choice(np.arange(self.foxnet.num_actions))
