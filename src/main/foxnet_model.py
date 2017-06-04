@@ -31,15 +31,15 @@ class FoxNetModel(object):
                 n_channels,
                 multi_frame_state,
                 frames_per_state,
-                actions,
+                available_actions,
                 cnn_filter_size,
                 cnn_n_filters,
                 verbose = False):
 
         self.lr = lr
         self.verbose = verbose
-        self.actions = actions
-        self.num_actions = len(actions)
+        self.available_actions = available_actions
+        self.num_actions = len(self.available_actions)
 
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
@@ -55,11 +55,11 @@ class FoxNetModel(object):
 
         # Build net
         if (model == "fc"): # Only works if !multi_frame_state
-            self.probs = foxnet.fully_connected(self.X, self.y, len(actions))
+            self.probs = foxnet.fully_connected(self.X, self.y, self.num_actions)
         elif (model == "simple_cnn"): # Only works if !multi_frame_state
-            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, len(actions), self.is_training)
+            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, self.is_training)
         elif (model == "dqn"):
-            self.probs = foxnet.DQN(self.X, self.y, len(actions))
+            self.probs = foxnet.DQN(self.X, self.y, self.num_actions)
         else:
             raise ValueError("Invalid model specified. Valid options are: 'fcc', 'simple_cnn', 'dqn'")
 
@@ -68,16 +68,16 @@ class FoxNetModel(object):
             self.rewards = ph(tf.float32, [None], name='rewards')
             # self.q_values = ph(tf.float32, [None, self.num_actions], name='q_values')
             self.q_values = self.probs
-            self.action = ph(tf.uint8, [None, self.num_actions], name='action')
+            self.actions = ph(tf.uint8, [None], name='action')
 
             Q_samp = self.rewards + self.lr * tf.reduce_max(self.q_values, axis=1)
-            action_mask = tf.one_hot(indices=self.action, depth=self.num_actions)
+            action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
             self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
             
         # Otherwise, classification
         else:
             # Define loss
-            onehot_labels = tf.one_hot(self.y, len(actions))
+            onehot_labels = tf.one_hot(self.y, self.num_actions)
             total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.probs)
             self.loss = tf.reduce_mean(total_loss)
 
@@ -199,7 +199,6 @@ class FoxNetModel(object):
 
     def run_online(self, 
                    sess, 
-                   actions, 
                    e, 
                    batch_size, 
                    out_height, 
@@ -229,7 +228,7 @@ class FoxNetModel(object):
                 # TODO: replay memory stuff
 
                 # Save states for batch forward pass
-                state_list.append(state)
+                state_list.extend(state)
 
                 feed_dict = {self.X: state, self.is_training: False}
                 q_values_it = sess.run(self.probs, feed_dict = feed_dict)
@@ -244,7 +243,7 @@ class FoxNetModel(object):
                 # TODO: store q values
 
                 # Send action to emulator
-                frame_reader.send_action(actions[action])
+                frame_reader.send_action(self.available_actions[action])
 
                 # Get next state
                 new_state, full_image = frame_reader.read_frame()
@@ -272,10 +271,14 @@ class FoxNetModel(object):
 
             # Do a batch forwad pass
             # q_values = tf.stack(q_value_list)
-            rewards = tf.stack(reward_list)
-            actions = tf.stack(action_list)
-            states = tf.stack(state_list)
+            # rewards = tf.stack(reward_list)
+            # actions = tf.stack(action_list)
+            # states = tf.stack(state_list)
 
+
+            rewards = reward_list
+            actions = action_list
+            states  = state_list
             # feed_dict = {
             #     self.X: states
             # }
