@@ -91,9 +91,9 @@ class FoxNetModel(object):
                            training_now=False,
                            validate_incrementally=False,
                            print_every=100,
-                           plot_losses=False,
-                           plot_accuracies=False,
-                           results_dir=""):
+                           plot=False,
+                           results_dir="",
+                           dt=""):
         iter_cnt = 0 # Counter for printing
         epoch_losses = []
         epoch_accuracies = []
@@ -172,12 +172,24 @@ class FoxNetModel(object):
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
-        # # Plot
-        # dt = str(datetime.datetime.now())
-        # if plot_losses:
-        #     plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
-        # if plot_accuracies:
-        #     plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
+        # Write out summary stats
+        print("##### TRAINING STATS ######################################")
+        print("Final Loss: {0:.3g}\nFinal Accuracy: {1:.3g}".format(total_loss, total_correct))
+        print("Epoch Losses: ")
+        print(format_list(epoch_losses))
+        print("Epoch Accuracies: ")
+        print(format_list(epoch_accuracies))
+        if (validate_incrementally):
+            print("Validation Losses: ")
+            print(format_list(validate_losses))
+            print("Validation Accuracies: ")
+            print(format_list(validate_accuracies))
+        print("##### DONE TRAINING #######################################")
+
+        # Plot
+        if plot:
+            make_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
+            make_plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
 
@@ -186,13 +198,13 @@ class FoxNetModel(object):
                        session):
         correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.y_eval)
         variables = [self.loss, correct_validation]
-        
+
         feed_dict = {
             self.X: data_manager.X_eval,
             self.y: data_manager.y_eval,
             self.is_training: False
         }
-        
+
         loss, correct = session.run(variables, feed_dict=feed_dict)
         accuracy = np.sum(correct * 1.0 / data_manager.X_eval.shape[0])
 
@@ -221,7 +233,10 @@ class FoxNetModel(object):
             print("loss: ", loss)
             print("batch reward: ", batch_reward)
 
-def plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
+def format_list(list):
+    return "["+", ".join(["%.2f" % x for x in list])+"]"
+
+def make_plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
     train_line = plt.plot(train, label="Training " + plot_name)
     if validate_incrementally:
         validate_line = plt.plot(validate, label="Validation " + plot_name)
@@ -230,5 +245,5 @@ def plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
     plt.title(plot_name)
     plt.xlabel('epoch number')
     plt.ylabel('epoch ' + plot_name)
-    plt.savefig(results_dir + plot_name + "/" + dt + ".png")
+    plt.savefig(results_dir + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()

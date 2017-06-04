@@ -1,5 +1,6 @@
-import os
+import datetime
 import numpy as np
+import os
 import tensorflow as tf
 
 from foxnet_model import FoxNetModel
@@ -11,14 +12,13 @@ from scipy.misc import imresize
 # COMMAND LINE ARGUMENTS
 tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
-tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn") 
+tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn")
 tf.app.flags.DEFINE_bool("validate", False, "Validate after all training is complete")
 tf.app.flags.DEFINE_bool("validate_incrementally", True, "Validate after every epoch")
 tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
-tf.app.flags.DEFINE_bool("plot_losses", True, "")
-tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
+tf.app.flags.DEFINE_bool("plot", True, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_bool("save_model", True, "")
@@ -51,9 +51,19 @@ ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'do nothing']
 FLAGS = tf.app.flags.FLAGS
 
 def initialize_model(session, model):
+    print("##### MODEL ###############################################")
     session.run(tf.global_variables_initializer())
     print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
+    print(FLAGS.__flags)
     return model
+
+def record_params():
+    dt = str(datetime.datetime.now())
+    f = open(FLAGS.results_dir + "params" + "/" + dt + ".txt","w+")
+    for flag in FLAGS.__flags:
+        f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
+    f.close()
+    return dt
 
 def run_model():
     # Reset every time
@@ -78,6 +88,7 @@ def run_model():
                 FLAGS.cnn_num_filters
             )
 
+    dt = record_params()
 
     # Initialize a data manager.
     data_manager = DataManager()
@@ -89,7 +100,7 @@ def run_model():
     # Load pretrained model
     if FLAGS.load_model:
         # Create an object to get emulator frames
-        frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
+        # frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 
         # Load the model
         model_dir = './models/%s' % (FLAGS.model_dir)
@@ -102,9 +113,10 @@ def run_model():
                     foxnet.run_q_learning(data_manager, session)
     else:
         # Train a new model.
-        print("##### TRAINING ############################################")
         initialize_model(session, foxnet)
+        print("dt = " + dt)
 
+        print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
             foxnet.run_q_learning(data_manager, session)
@@ -115,9 +127,9 @@ def run_model():
                                       training_now=True,
                                       validate_incrementally=FLAGS.validate_incrementally,
                                       print_every=1,
-                                      plot_losses=FLAGS.plot_losses,
-                                      plot_accuracies=FLAGS.plot_accuracies,
-                                      results_dir=FLAGS.results_dir
+                                      plot=FLAGS.plot,
+                                      results_dir=FLAGS.results_dir,
+                                      dt=dt
                                       )
 
     # Save the model

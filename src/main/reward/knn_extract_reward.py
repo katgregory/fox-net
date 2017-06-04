@@ -125,7 +125,7 @@ def save_input_images(templates, input_images, labels, output_dir=None):
         if output_dir is None:
             os.rename(input_filename, input_base + '_' + str(reward) + input_extension)
         else:
-            cv2.imwrite(output_dir + input_name + '_r=' + str(reward) + input_extension, cv2.imread(input_filename))
+            cv2.imwrite(output_dir + input_name + '_s=' + str(reward) + input_extension, cv2.imread(input_filename))
 
         prev_reward = reward
 
