@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
 
-tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback")
+tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback.")
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
 tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
@@ -45,8 +45,8 @@ tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
-ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'n']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -96,7 +96,7 @@ def run_model():
         model_name = '%s' % (FLAGS.model_dir)
         print('Loading model from dir: %s' % model_dir)
         sv = tf.train.Supervisor(logdir=model_dir)
-        with sv.managed_session() as sess:
+        with sv.managed_session() as session:
             if not sv.should_stop():
                 if FLAGS.train_online == True:
                     foxnet.run_q_learning(data_manager, session)

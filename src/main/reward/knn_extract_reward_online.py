@@ -16,7 +16,6 @@ class RewardExtractor():
     def __init__(self):
         template_dir = './reward/templates/*'
         self.templates = self.load_template_images(template_dir)
-        print(len(self.templates))
 
     def load_template_images(self, dir, filter_image_flag=True):
         '''
@@ -24,7 +23,6 @@ class RewardExtractor():
         (filename, image as a numpy array)
         '''
         image_filenames = glob.glob(dir)
-        print(image_filenames)
 
         images = []
         for image_filename in image_filenames:

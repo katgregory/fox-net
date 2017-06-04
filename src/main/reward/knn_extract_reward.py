@@ -3,7 +3,7 @@ import glob
 import os
 import math
 import numpy as np
-import util
+import utils
 from scipy.stats.stats import pearsonr
 from optparse import OptionParser
 
@@ -44,7 +44,7 @@ def load_template_images(dir, filter_image_flag=True):
         image = cv2.imread(image_filename)
 
         if filter_image_flag:
-            image = util.filter_image(image)
+            image = utils.filter_image(image)
 
         images.append((image_filename, image.flatten()))
 
@@ -136,7 +136,7 @@ def main():
 
     # Load template and input images.
     templates = load_template_images(options.template_dir)
-    input_images = util.load_images(options.input_dir)
+    input_images = utils.load_images(options.input_dir)
 
     # Classify each input image.
     labels = classify_images(templates, input_images)

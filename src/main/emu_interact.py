@@ -16,7 +16,7 @@ class FrameReader():
 
 		self.out_height = out_height
 		self.out_width = out_width
-
+		self.ip = ip
 		self._launch_socket()
 
 	def _launch_socket(self):
@@ -25,7 +25,7 @@ class FrameReader():
 			try:
 				# Use socket.gethostname() for local server
 				# Specify host IP for remote
-				self.s.connect(('10.34.242.122', 11111))
+				self.s.connect((self.ip, 11111))
 				print('Socket connected successfully')
 				break
 			except:
@@ -59,7 +59,6 @@ class FrameReader():
 			'j': 0x80, 
 			'k': 0x40,
 			'l': 0x10,
-			# 'l': 0,
 			'n': 0
 		}
 		self.s.send(struct.pack('I',action_map[action]))
