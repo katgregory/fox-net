@@ -100,7 +100,7 @@ class FoxNetModel(object):
         total_loss, total_correct = None, None
 
         if validate_incrementally:
-            correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.y_eval)
+            correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.a_eval)
             validate_variables = [self.loss, correct_validation]
         else:
             validate_variables = None

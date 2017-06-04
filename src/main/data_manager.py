@@ -41,8 +41,8 @@ class DataManager:
         self.s_eval, self.a_eval, scores_test, h_test = eval_dataset
 
         # Compute the reward given scores and health. Currently, this just adds the two, weighting each one equally.
-        self.r_train = scores_train + h_train
-        self.r_test = scores_test + h_test
+        self.r_train = np.add(scores_train, h_train)
+        self.r_test = np.add(scores_test, h_test)
 
         self.batch_size = batch_size
 
