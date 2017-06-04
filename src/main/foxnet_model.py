@@ -91,9 +91,9 @@ class FoxNetModel(object):
                            training_now=False,
                            validate_incrementally=False,
                            print_every=100,
-                           plot_losses=False,
-                           plot_accuracies=False,
-                           results_dir=""):
+                           plot=False,
+                           results_dir="",
+                           dt=""):
         iter_cnt = 0 # Counter for printing
         epoch_losses = []
         epoch_accuracies = []
@@ -187,12 +187,9 @@ class FoxNetModel(object):
         print("##### DONE TRAINING #######################################")
 
         # Plot
-        dt = str(datetime.datetime.now())
-        # TODO: Add parameters
-        if plot_losses:
-            plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
-        if plot_accuracies:
-            plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
+        if plot:
+            make_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
+            make_plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
 
@@ -239,7 +236,7 @@ class FoxNetModel(object):
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"
 
-def plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
+def make_plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
     train_line = plt.plot(train, label="Training " + plot_name)
     if validate_incrementally:
         validate_line = plt.plot(validate, label="Validation " + plot_name)
@@ -248,5 +245,5 @@ def plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
     plt.title(plot_name)
     plt.xlabel('epoch number')
     plt.ylabel('epoch ' + plot_name)
-    plt.savefig(results_dir + plot_name + "/" + dt + ".png")
+    plt.savefig(results_dir + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()
