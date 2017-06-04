@@ -68,7 +68,7 @@ class FoxNetModel(object):
             Q_samp = self.rewards + self.lr * tf.reduce_max(self.q_values, axis=1)
             action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
             self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
-            
+
         # Otherwise, set up loss for classification.
         else:
             # Define loss
@@ -98,7 +98,14 @@ class FoxNetModel(object):
         epoch_losses = []
         epoch_accuracies = []
         total_loss, total_correct = None, None
-        validate_variables, validate_losses, validate_accuracies = None, None, None
+
+        if validate_incrementally:
+            correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.y_eval)
+            validate_variables = [self.loss, correct_validation]
+        else:
+            validate_variables = None
+        validate_losses = []
+        validate_accuracies = []
 
         for e in range(epochs):
             # Keep track of losses and accuracy.
@@ -121,12 +128,6 @@ class FoxNetModel(object):
                 variables = [self.loss, correct_prediction, accuracy]
                 if training_now:
                     variables[-1] = self.train_step
-
-                if validate_incrementally:
-                    correct_validation = tf.equal(tf.argmax(self.probs, 1), a_eval_batch)
-                    validate_variables = [self.loss, correct_validation]
-                    validate_losses = []
-                    validate_accuracies = []
 
                 # Create a feed dictionary for this batch
                 feed_dict = {self.X: s_batch,
@@ -168,7 +169,7 @@ class FoxNetModel(object):
                 validate_losses.append(loss)
                 validate_correct = np.sum(corr * 1.0 / data_manager.s_eval.shape[0])
                 validate_accuracies.append(validate_correct)
-                print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"
+                print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
         # # Plot
@@ -179,6 +180,23 @@ class FoxNetModel(object):
         #     plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
+
+    def run_validation(self,
+                       data_manager,
+                       session):
+        correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.y_eval)
+        variables = [self.loss, correct_validation]
+        
+        feed_dict = {
+            self.X: data_manager.X_eval,
+            self.y: data_manager.y_eval,
+            self.is_training: False
+        }
+        
+        loss, correct = session.run(variables, feed_dict=feed_dict)
+        accuracy = np.sum(correct * 1.0 / data_manager.X_eval.shape[0])
+
+        print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(loss, accuracy))
 
     def run_q_learning(self,
                        data_manager,
