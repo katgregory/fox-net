@@ -46,15 +46,15 @@ def load_datasets(tier, params):
     print("Action counts: " + str(action_counter))
 
     # Create states by adding a third dimension over n_frames frames
-    # Final state has shape (48, 64, 3, n_frames)
+    # Final state has shape (n_frames, 48, 64, 3)
     # We discard the first (n_frames - 1) frames
     if (params["multi_frame_state"]):
         print("Creating states:")
         n_frames = params["frames_per_state"]
         states = []
         for i in tqdm(xrange(len(images) - n_frames + 1)):
-            state = tuple(images[x][:, :, :, None] for x in xrange(i, i + n_frames - 1))
-            states.append(np.concatenate(state, axis=3))
+            state = tuple(images[x][None, :, :, :] for x in xrange(i, i + n_frames))
+            states.append(np.concatenate(state, axis=0))
         labels = labels[n_frames - 1:] # Also remove (n_frames - 1) labels
         print("Created " + str(len(states)) + " states.")
     else: # Final state has shape (480, 640, 3)
@@ -72,7 +72,7 @@ def load_datasets(tier, params):
     y_test = np.stack(y_test)
 
     # Print stats
-    # Data: count (in train/test set) x 48 (height) x 68 (width) x 3 (channels) [x 3 (num frames) if multi_frame_state]
+    # Data: count (in train/test set) [x 3 (num frames) if multi_frame_state] x 48 (height) x 68 (width) x 3 (channels)
     # Labels: count (in train/test set) x 1 (index of action in ACTIONS array)
     print('Train data shape: ' + str(X_train.shape))
     print('Train labels shape: ' + str(y_train.shape))
