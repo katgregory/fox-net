@@ -91,7 +91,7 @@ def run_model(train_dataset, eval_dataset, lr):
         sv = tf.train.Supervisor(logdir=model_dir)
         with sv.managed_session() as sess:
             if not sv.should_stop():
-                if Flags.train_online == True:
+                if FLAGS.train_online == True:
                     foxnet.run_online(
                         sess,
                         FLAGS.ip,
