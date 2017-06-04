@@ -108,39 +108,35 @@ def run_model():
                     print("action: " + str(ACTION_NAMES[action_idx]))
                     frame_reader.send_action(action)
     else:
-        # Train a new Model
-        initialize_model(sess, foxnet)
+        # Train a new model.
+        initialize_model(session, foxnet)
         print('Training...')
 
-        # If doing online Q-learning
-        if FLAGS.train_online == True:
-            foxnet.run_online(
-                data_manager,
-                session
-            )
-
+        # Run Q-learning or classification.
+        if FLAGS.qlearning:
+            foxnet.run_q_learning(data_manager, session)
         else:
-            foxnet.run(
-                    data_manager,
-                    session,
-                    epochs=FLAGS.num_epochs,
-                    training_now=True,
-                    validate_incrementally=FLAGS.validate_incrementally,
-                    print_every=1,
-                    plot_losses=FLAGS.plot_losses,
-                    plot_accuracies=FLAGS.plot_accuracies,
-                    results_dir=FLAGS.results_dir
-                )
+            foxnet.run_classification(
+                                      data_manager,
+                                      session,
+                                      epochs=FLAGS.num_epochs,
+                                      training_now=True,
+                                      validate_incrementally=FLAGS.validate_incrementally,
+                                      print_every=1,
+                                      plot_losses=FLAGS.plot_losses,
+                                      plot_accuracies=FLAGS.plot_accuracies,
+                                      results_dir=FLAGS.results_dir
+                                      )
 
     # Save the model
-    if FLAGS.save_model == True:
+    if FLAGS.save_model:
         # Save model
         model_dir = './models/%s' % (FLAGS.model_dir)
         model_name = '%s' % (FLAGS.model_dir)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
         saver = tf.train.Saver()
-        saver.save(sess, model_dir + '/' + model_name)
+        saver.save(session, model_dir + '/' + model_name)
         print('Saved model to dir: %s' % model_dir)
 
     # Validate the model
@@ -148,7 +144,7 @@ def run_model():
     # foxnet.run(sess, X_eval, y_eval, FLAGS.batch_size, epochs=1)
 
     # Close session
-    sess.close()
+    session.close()
 
 def get_data_params():
     return {

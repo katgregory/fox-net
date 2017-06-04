@@ -20,7 +20,7 @@ class FoxNetModel(object):
 
     def __init__(self,
                 model,
-                qlearning,
+                q_learning,
                 lr,
                 height,
                 width,
@@ -60,7 +60,7 @@ class FoxNetModel(object):
             raise ValueError("Invalid model specified. Valid options are: 'fcc', 'simple_cnn', 'dqn'")
 
         # Set up loss for Q-learning
-        if qlearning:
+        if q_learning:
             self.rewards = ph(tf.float32, [None], name='rewards')
             self.q_values = self.probs
             self.actions = ph(tf.uint8, [None], name='action')
@@ -69,7 +69,7 @@ class FoxNetModel(object):
             action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
             self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
             
-        # Otherwise, classification
+        # Otherwise, set up loss for classification.
         else:
             # Define loss
             onehot_labels = tf.one_hot(self.y, self.num_actions)
@@ -84,21 +84,24 @@ class FoxNetModel(object):
     # RUN GRAPH
     #############################
 
-    def run(self,
-            data_manager,
-            session,
-            epochs=1,
-            training_now=False,
-            validate_incrementally=False,
-            print_every=100,
-            plot_losses=False,
-            plot_accuracies=False,
-            results_dir=""):
+    def run_classification(self,
+                           data_manager,
+                           session,
+                           epochs=1,
+                           training_now=False,
+                           validate_incrementally=False,
+                           print_every=100,
+                           plot_losses=False,
+                           plot_accuracies=False,
+                           results_dir=""):
         iter_cnt = 0 # Counter for printing
         epoch_losses = []
         epoch_accuracies = []
+        total_loss, total_correct = None, None
+        validate_variables, validate_losses, validate_accuracies = None, None, None
+
         for e in range(epochs):
-            # Keep track of losses and accuracy
+            # Keep track of losses and accuracy.
             correct = 0
             losses = []
 
@@ -107,7 +110,7 @@ class FoxNetModel(object):
             while data_manager.has_next_batch():
                 X_batch, y_batch, y_eval_batch = data_manager.get_next_batch()
 
-                # Have tensorflow compute accuracy
+                # Have tensorflow compute accuracy.
                 # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
                 correct_prediction = tf.equal(tf.argmax(self.probs, 1), y_batch)
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -126,9 +129,9 @@ class FoxNetModel(object):
                     validate_accuracies = []
 
                 # Create a feed dictionary for this batch
-                feed_dict = { self.X: X_batch,
-                              self.y: y_batch,
-                              self.is_training: training_now }
+                feed_dict = {self.X: X_batch,
+                             self.y: y_batch,
+                             self.is_training: training_now}
 
                 # Get actual batch size
                 # actual_batch_size = yd[idx].shape[0]
@@ -177,11 +180,11 @@ class FoxNetModel(object):
 
         return total_loss, total_correct
 
-    def run_online(self,
-                   data_manager,
-                   session,
-                   training_now=False
-                   ):
+    def run_q_learning(self,
+                       data_manager,
+                       session,
+                       training_now=False
+                       ):
         data_manager.init_epoch()
 
         while data_manager.has_next_batch():
@@ -189,13 +192,11 @@ class FoxNetModel(object):
             states, actions, rewards = data_manager.get_next_batch()
             batch_reward = sum(rewards)
             variables = [self.loss, self.train_step]
-
             feed_dict = {
                 self.X: states,
                 self.rewards: rewards,
                 self.actions: actions,
                 self.is_training: training_now}
-
             loss = session.run(variables, feed_dict=feed_dict)
 
             print("loss: ", loss)
