@@ -108,11 +108,11 @@ class FoxNetModel(object):
             data_manager.init_epoch()
 
             while data_manager.has_next_batch():
-                X_batch, y_batch, y_eval_batch = data_manager.get_next_batch()
+                s_batch, a_batch, _, a_eval_batch = data_manager.get_next_batch()
 
                 # Have tensorflow compute accuracy.
                 # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
-                correct_prediction = tf.equal(tf.argmax(self.probs, 1), y_batch)
+                correct_prediction = tf.equal(tf.argmax(self.probs, 1), a_batch)
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
                 # batch_size = yd.shape[0] # TODO: Add back batch sizes
 
@@ -123,14 +123,14 @@ class FoxNetModel(object):
                     variables[-1] = self.train_step
 
                 if validate_incrementally:
-                    correct_validation = tf.equal(tf.argmax(self.probs, 1), y_eval_batch)
+                    correct_validation = tf.equal(tf.argmax(self.probs, 1), a_eval_batch)
                     validate_variables = [self.loss, correct_validation]
                     validate_losses = []
                     validate_accuracies = []
 
                 # Create a feed dictionary for this batch
-                feed_dict = {self.X: X_batch,
-                             self.y: y_batch,
+                feed_dict = {self.X: s_batch,
+                             self.y: a_batch,
                              self.is_training: training_now}
 
                 # Get actual batch size
@@ -151,8 +151,8 @@ class FoxNetModel(object):
                           .format(iter_cnt, loss, np.sum(corr) * 1.0 / actual_batch_size))
                 iter_cnt += 1
 
-            total_correct = correct * 1.0 / data_manager.X_train.shape[0]
-            total_loss = np.sum(losses) / data_manager.X_train.shape[0]
+            total_correct = correct * 1.0 / data_manager.s_train.shape[0]
+            total_loss = np.sum(losses) / data_manager.s_train.shape[0]
             epoch_losses.append(total_loss)
             epoch_accuracies.append(total_correct)
             print("Epoch {2}, Overall training loss = {0:.3g} and accuracy of {1:.3g}"
@@ -160,13 +160,13 @@ class FoxNetModel(object):
 
             if validate_incrementally:
                 validate_feed_dict = {
-                    self.X: data_manager.X_eval,
-                    self.y: data_manager.y_eval,
+                    self.X: data_manager.s_eval,
+                    self.y: data_manager.a_eval,
                     self.is_training: False
                 }
                 loss, corr = session.run(validate_variables, feed_dict=validate_feed_dict)
                 validate_losses.append(loss)
-                validate_correct = np.sum(corr * 1.0 / data_manager.X_eval.shape[0])
+                validate_correct = np.sum(corr * 1.0 / data_manager.s_eval.shape[0])
                 validate_accuracies.append(validate_correct)
                 print("Epoch {2}, Validation loss = {0:.3g} and accuracy of {1:.3g}"
                   .format(loss, validate_correct, e+1))
@@ -189,14 +189,14 @@ class FoxNetModel(object):
 
         while data_manager.has_next_batch():
             # Perform training step.
-            states, actions, rewards = data_manager.get_next_batch()
-            batch_reward = sum(rewards)
+            s_batch, a_batch, r_batch, _ = data_manager.get_next_batch()
+            batch_reward = sum(r_batch)
 
             variables = [self.loss, self.train_step]
             feed_dict = {
-                self.X: states,
-                self.rewards: rewards,
-                self.actions: actions,
+                self.X: s_batch,
+                self.rewards: r_batch,
+                self.actions: a_batch,
                 self.is_training: training_now}
             loss = session.run(variables, feed_dict=feed_dict)
 
