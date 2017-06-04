@@ -2,10 +2,9 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from data import load_datasets
 from foxnet_model import FoxNetModel
 from emu_interact import FrameReader
-#from visualizers import FrameDisplayer
+from data_manager import DataManager
 from scipy.misc import imresize
 
 
@@ -57,11 +56,15 @@ def initialize_model(session, model):
     print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
     return model
 
-def run_model(train_dataset, eval_dataset, lr):
+def run_model():
     # Reset every time
     tf.reset_default_graph()
     tf.set_random_seed(1)
 
+    # Get the session.
+    session = tf.Session()
+
+    # Initialize a FoxNet model.
     foxnet = FoxNetModel(
                 FLAGS.model,
                 FLAGS.qlearning,
@@ -76,14 +79,18 @@ def run_model(train_dataset, eval_dataset, lr):
                 FLAGS.cnn_num_filters
             )
 
-    X_train, y_train = train_dataset
-    X_eval, y_eval = eval_dataset
+
+    # Initialize a data manager.
+    data_manager = DataManager()
+    if FLAGS.train_online:
+        data_manager.init_online(foxnet, FLAGS.batch_size, FLAGS.image_height, FLAGS.image_width, 0.1)
+    else:
+        data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 
     # Load pretrained model
     if FLAGS.load_model:
         # Create an object to get emulator frames
         frame_reader = FrameReader(FLAGS.image_height, FLAGS.image_width)
-#        frame_displayer = FrameDisplayer()
 
         # Load the model
         model_dir = './models/%s' % (FLAGS.model_dir)
@@ -95,7 +102,6 @@ def run_model(train_dataset, eval_dataset, lr):
 
                 while True:
                     X_emu, _ = frame_reader.read_frame()
-#                    frame_displayer.display_frame(X_emu)
                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
                     action_idx = np.argmax(pred)
                     action = ACTIONS[action_idx]
@@ -103,31 +109,23 @@ def run_model(train_dataset, eval_dataset, lr):
                     frame_reader.send_action(action)
     else:
         # Train a new Model
-        sess = tf.Session()
         initialize_model(sess, foxnet)
         print('Training...')
 
         # If doing online Q-learning
         if FLAGS.train_online == True:
             foxnet.run_online(
-                sess,
-                0.1,
-                FLAGS.batch_size,
-                FLAGS.image_height,
-                FLAGS.image_width,
+                data_manager,
+                session
             )
 
         else:
             foxnet.run(
-                    sess,
-                    X_train,
-                    y_train,
-                    FLAGS.batch_size,
+                    data_manager,
+                    session,
                     epochs=FLAGS.num_epochs,
                     training_now=True,
                     validate_incrementally=FLAGS.validate_incrementally,
-                    X_eval=X_eval,
-                    y_eval=y_eval,
                     print_every=1,
                     plot_losses=FLAGS.plot_losses,
                     plot_accuracies=FLAGS.plot_accuracies,
@@ -172,14 +170,8 @@ def main(_):
     # Set random seed
     np.random.seed(244)
 
-    # Load the two pertinent datasets into train_dataset and eval_dataset
-    if FLAGS.test:
-        train_dataset, eval_dataset = load_datasets('test', get_data_params())
-    else:
-        train_dataset, eval_dataset = load_datasets('dev', get_data_params())
-
     # Train model
-    run_model(train_dataset, eval_dataset, FLAGS.lr)
+    run_model()
 
 if __name__ == "__main__":
     tf.app.run()
