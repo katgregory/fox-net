@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 
 class FrameReader():
-	def __init__(self, out_height, out_width):
+	def __init__(self, ip, out_height, out_width):
 		self.WIDTH = 640
 		self.HEIGHT = 480
 		self.DEPTH = 3
@@ -21,10 +21,11 @@ class FrameReader():
 
 	def _launch_socket(self):
 		# Wait for the emulator to connect
-		print(socket.gethostname())
 		for i in range(100):
 			try:
-				self.s.connect((socket.gethostname(), 11111))
+				# Use socket.gethostname() for local server
+				# Specify host IP for remote
+				self.s.connect(('10.34.242.122', 11111))
 				print('Socket connected successfully')
 				break
 			except:

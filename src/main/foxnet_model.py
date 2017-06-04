@@ -197,7 +197,8 @@ class FoxNetModel(object):
         return total_loss, total_correct
 
     def run_online(self, 
-                   sess, 
+                   sess,
+                   ip,
                    e, 
                    batch_size, 
                    out_height, 
@@ -206,7 +207,7 @@ class FoxNetModel(object):
                    ):
 
         # Initialize emulator transfers
-        frame_reader = FrameReader(out_height, out_width)
+        frame_reader = FrameReader(ip, out_height, out_width)
         health_extractor = HealthExtractor()
         reward_extractor = RewardExtractor()
 

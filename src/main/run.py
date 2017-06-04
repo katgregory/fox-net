@@ -28,6 +28,7 @@ tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
 
+tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback")
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
 tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
@@ -47,9 +48,6 @@ tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
 ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
-
-# ACTIONS = ['w', 'a', 's', 'd', 'j', 'n']
-# ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -83,7 +81,7 @@ def run_model(train_dataset, eval_dataset, lr):
     # Load pretrained model
     if FLAGS.load_model:
         # Create an object to get emulator frames
-        frame_reader = FrameReader(FLAGS.image_height, FLAGS.image_width)
+        frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 #        frame_displayer = FrameDisplayer()
 
         # Load the model
@@ -96,6 +94,7 @@ def run_model(train_dataset, eval_dataset, lr):
                 if Flags.train_online == True:
                     foxnet.run_online(
                         sess,
+                        FLAGS.ip,
                         0.1,
                         FLAGS.batch_size,
                         FLAGS.image_height,
@@ -137,6 +136,7 @@ def run_model(train_dataset, eval_dataset, lr):
         if FLAGS.train_online == True:
             foxnet.run_online(
                 sess,
+                FLAGS.ip,
                 0.1,
                 FLAGS.batch_size,
                 FLAGS.image_height,
