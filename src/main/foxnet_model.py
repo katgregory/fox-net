@@ -181,6 +181,23 @@ class FoxNetModel(object):
 
         return total_loss, total_correct
 
+    def run_validation(self,
+                       data_manager,
+                       session):
+        correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.y_eval)
+        variables = [self.loss, correct_validation]
+        
+        feed_dict = {
+            self.X: data_manager.X_eval,
+            self.y: data_manager.y_eval,
+            self.is_training: False
+        }
+        
+        loss, correct = session.run(variables, feed_dict=feed_dict)
+        accuracy = np.sum(correct * 1.0 / data_manager.X_eval.shape[0])
+
+        print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(loss, accuracy))
+
     def run_q_learning(self,
                        data_manager,
                        session,
