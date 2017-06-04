@@ -93,15 +93,23 @@ def run_model(train_dataset, eval_dataset, lr):
         sv = tf.train.Supervisor(logdir=model_dir)
         with sv.managed_session() as sess:
             if not sv.should_stop():
+                if Flags.train_online == True:
+                    foxnet.run_online(
+                        sess,
+                        0.1,
+                        FLAGS.batch_size,
+                        FLAGS.image_height,
+                        FLAGS.image_width,
+                    )
 
-                while True:
-                    X_emu, _ = frame_reader.read_frame()
-#                    frame_displayer.display_frame(X_emu)
-                    pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
-                    action_idx = np.argmax(pred)
-                    action = ACTIONS[action_idx]
-                    print("action: " + str(ACTION_NAMES[action_idx]))
-                    frame_reader.send_action(action)
+#                 while True:
+#                     X_emu, _ = frame_reader.read_frame()
+# #                    frame_displayer.display_frame(X_emu)
+#                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
+#                     action_idx = np.argmax(pred)
+#                     action = ACTIONS[action_idx]
+#                     print("action: " + str(ACTION_NAMES[action_idx]))
+#                     frame_reader.send_action(action)
     else:
         # Train a new Model
         sess = tf.Session()
