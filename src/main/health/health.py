@@ -3,7 +3,7 @@ from scipy.misc import imread
 from matplotlib import pyplot as plt
 
 class HealthExtractor():
-	def __init__(self, healthbar_path='../src/main/health/healthbar.png'):
+	def __init__(self, healthbar_path='./src/main/health/healthbar.png'):
 		self.ul = [42, 56]
 		self.br = [53, 149]
 		self.totalpixels = (self.br[1]-self.ul[1])*(self.br[0]-self.ul[0])
