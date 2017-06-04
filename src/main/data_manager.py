@@ -12,13 +12,13 @@ class DataManager:
     def __init__(self):
         self.is_online = False
 
-    def init_online(self, foxnet, batch_size, image_height, image_width, epsilon):
+    def init_online(self, foxnet, batch_size, ip, image_height, image_width, epsilon):
         self.is_online = True
         self.foxnet = foxnet
         self.batch_size = batch_size
 
         # Initialize emulator transfers
-        self.frame_reader = FrameReader(image_height, image_width)
+        self.frame_reader = FrameReader(ip, image_height, image_width)
         self.health_extractor = HealthExtractor()
         self.reward_extractor = RewardExtractor()
 

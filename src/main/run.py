@@ -23,9 +23,11 @@ tf.app.flags.DEFINE_bool("plot_accuracies", True, "")
 tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_bool("save_model", True, "")
 tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files")
+tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
 
+tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback")
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
 tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
@@ -45,9 +47,6 @@ tf.app.flags.DEFINE_integer("batch_size", 20, "")
 
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
 ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
-
-# ACTIONS = ['w', 'a', 's', 'd', 'j', 'n']
-# ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -83,14 +82,14 @@ def run_model():
     # Initialize a data manager.
     data_manager = DataManager()
     if FLAGS.train_online:
-        data_manager.init_online(foxnet, FLAGS.batch_size, FLAGS.image_height, FLAGS.image_width, 0.1)
+        data_manager.init_online(foxnet, FLAGS.batch_size, FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 
     # Load pretrained model
     if FLAGS.load_model:
         # Create an object to get emulator frames
-        frame_reader = FrameReader(FLAGS.image_height, FLAGS.image_width)
+        frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 
         # Load the model
         model_dir = './models/%s' % (FLAGS.model_dir)
@@ -99,14 +98,17 @@ def run_model():
         sv = tf.train.Supervisor(logdir=model_dir)
         with sv.managed_session() as sess:
             if not sv.should_stop():
+                if FLAGS.train_online == True:
+                    foxnet.run_q_learning(data_manager, session)
 
-                while True:
-                    X_emu, _ = frame_reader.read_frame()
-                    pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
-                    action_idx = np.argmax(pred)
-                    action = ACTIONS[action_idx]
-                    print("action: " + str(ACTION_NAMES[action_idx]))
-                    frame_reader.send_action(action)
+#                 while True:
+#                     X_emu, _ = frame_reader.read_frame()
+#                     frame_displayer.display_frame(X_emu)
+#                     pred = sess.run(foxnet.probs, feed_dict={foxnet.X:X_emu, foxnet.is_training:False})
+#                     action_idx = np.argmax(pred)
+#                     action = ACTIONS[action_idx]
+#                     print("action: " + str(ACTION_NAMES[action_idx]))
+#                     frame_reader.send_action(action)
     else:
         # Train a new model.
         initialize_model(session, foxnet)
@@ -116,8 +118,7 @@ def run_model():
         if FLAGS.qlearning:
             foxnet.run_q_learning(data_manager, session)
         else:
-            foxnet.run_classification(
-                                      data_manager,
+            foxnet.run_classification(data_manager,
                                       session,
                                       epochs=FLAGS.num_epochs,
                                       training_now=True,
