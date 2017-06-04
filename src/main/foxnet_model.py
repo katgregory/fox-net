@@ -172,14 +172,46 @@ class FoxNetModel(object):
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(loss, validate_correct, e+1))
 
-        # # Plot
-        # dt = str(datetime.datetime.now())
-        # if plot_losses:
-        #     plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
-        # if plot_accuracies:
-        #     plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
+        # Write out summary stats
+        print("##### TRAINING STATS ######################################")
+        print("Final Loss: {0:.3g}\nFinal Accuracy: {1:.3g}".format(total_loss, total_correct))
+        print("Epoch Losses: ")
+        print(format_list(epoch_losses))
+        print("Epoch Accuracies: ")
+        print(format_list(epoch_accuracies))
+        if (validate_incrementally):
+            print("Validation Losses: ")
+            print(format_list(validate_losses))
+            print("Validation Accuracies: ")
+            print(format_list(validate_accuracies))
+        print("##### DONE TRAINING #######################################")
+
+        # Plot
+        dt = str(datetime.datetime.now())
+        # TODO: Add parameters
+        if plot_losses:
+            plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
+        if plot_accuracies:
+            plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
+
+    def run_validation(self,
+                       data_manager,
+                       session):
+        correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.y_eval)
+        variables = [self.loss, correct_validation]
+
+        feed_dict = {
+            self.X: data_manager.X_eval,
+            self.y: data_manager.y_eval,
+            self.is_training: False
+        }
+
+        loss, correct = session.run(variables, feed_dict=feed_dict)
+        accuracy = np.sum(correct * 1.0 / data_manager.X_eval.shape[0])
+
+        print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(loss, accuracy))
 
     def run_q_learning(self,
                        data_manager,
@@ -203,6 +235,9 @@ class FoxNetModel(object):
 
             print("loss: ", loss)
             print("batch reward: ", batch_reward)
+
+def format_list(list):
+    return "["+", ".join(["%.2f" % x for x in list])+"]"
 
 def plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
     train_line = plt.plot(train, label="Training " + plot_name)
