@@ -218,10 +218,11 @@ class FoxNetModel(object):
                        session,
                        epochs,
                        model_path,
+                       results_dir,
                        training_now=False,
                        dt="",
                        plot=False,
-                       plot_every=20
+                       plot_every=20,
                        ):
 
         epoch_losses = []
@@ -248,7 +249,7 @@ class FoxNetModel(object):
                     self.rewards: r_batch,
                     self.actions: a_batch,
                     self.is_training: training_now}
-                loss = session.run(variables, feed_dict=feed_dict)
+                loss, _ = session.run(variables, feed_dict=feed_dict)
 
                 # Aggregate performance stats
                 losses.append(loss * actual_batch_size)
@@ -263,7 +264,7 @@ class FoxNetModel(object):
 
             # Plot loss every "plot_every" batches
             if plot:
-                total_loss = np.sum(losses) / data_manager.s_train.shape[0]
+                total_loss = np.sum(losses) / data_manager.batch_size
                 epoch_losses.append(total_loss)
                 make_q_plot("loss", epoch_losses, results_dir, dt)
             # with open(reward_filename, 'a') as f:
@@ -291,6 +292,6 @@ def make_q_plot(plot_name, data, results_dir, dt):
     plt.grid(True)
     plt.title(plot_name)
     plt.xlabel('batch number')
-    plt.ylabel(lot_name)
+    plt.ylabel(plot_name)
     plt.savefig(results_dir + "q_" + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()
