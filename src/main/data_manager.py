@@ -1,8 +1,8 @@
 from emu_interact import FrameReader
-from collections import deque
 from health.health import HealthExtractor
 from reward.knn_extract_reward_online import RewardExtractor
 from data import load_datasets
+from replay_buffer import ReplayBuffer
 
 import numpy as np
 import math
@@ -12,12 +12,16 @@ class DataManager:
     def __init__(self):
         self.is_online = False
 
-    def init_online(self, foxnet, session, batch_size, ip, image_height, image_width, epsilon):
+    def init_online(self, foxnet, session, batch_size, replay_buffer_size, frames_per_state, ip, image_height,
+                    image_width, epsilon):
         self.is_online = True
         self.foxnet = foxnet
         self.session = session
         self.batch_size = batch_size
         self.epsilon = epsilon
+
+        # Initialize ReplayBuffer.
+        self.replay_buffer = ReplayBuffer(replay_buffer_size, frames_per_state)
 
         # Initialize emulator transfers
         self.frame_reader = FrameReader(ip, image_height, image_width)
@@ -25,8 +29,8 @@ class DataManager:
         self.reward_extractor = RewardExtractor()
 
         # Keep full image for reward extraction.
-        state, full_image = self.frame_reader.read_frame()
-        self.states = [state]
+        frame, full_image = self.frame_reader.read_frame()
+        self.frames = [frame]
 
     def init_offline(self, use_test_set, data_params, batch_size):
         self.is_online = False
@@ -71,15 +75,20 @@ class DataManager:
         self.batch_iteration += 1
 
         if self.is_online:
-            state = self.states[-1]  # TODO: is this right?
 
-            # Collect a batch.
-            for i in range(self.batch_size):
-                # TODO: replay memory stuff
+            frame = self.frames[-1]
 
-                # Save states for batch forward pass.
-                s_batch.extend(state)
+            # Play the game for base_size frames.
+            # TODO Introduce a new parameter specifying how many frames to play each time we update parameters.
+            i = 0
+            while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
+                i += 1
+                # Store the most recent frame and get the past frames_per_state frames that define the current state.
+                replay_buffer_index = self.replay_buffer.store_frame(np.squeeze(frame))
+                state = self.replay_buffer.encode_recent_observation()
+                state = np.expand_dims(state, 0)
 
+                # Get the best action to take in the current state.
                 feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
                 q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
 
@@ -88,28 +97,25 @@ class DataManager:
                     action = np.argmax(q_values_it)
                 else:
                     action = np.random.choice(np.arange(self.foxnet.num_actions))
-                a_batch.append(action)
 
-                # Send action to emulator
+                # Send action to emulator.
                 self.frame_reader.send_action(self.foxnet.available_actions[action])
 
-                # Get next state
-                new_state, full_image = self.frame_reader.read_frame()
+                # Get the next frame.
+                new_frame, full_image = self.frame_reader.read_frame()
 
-                # Get health reward
-                health_reward = self.health_extractor(full_image, offline=False)
-
-                # Get score reward
+                # Get the reward (score + health).
                 score_reward = self.reward_extractor.get_reward(full_image)
+                health_reward = self.health_extractor(full_image, offline=False)
+                reward = score_reward + health_reward
 
-                reward = health_reward + score_reward
-                r_batch.append(reward)
+                # Store the <s,a,r,s'> transition.
+                # TODO Pass in True if terminal?
+                self.replay_buffer.store_effect(replay_buffer_index, action, reward, False)
 
-                # TODO: implement done mask?
+                frame = new_frame
 
-                # TODO: store transition
-
-                state = new_state
+            s_batch, a_batch, r_batch, _, _ = self.replay_buffer.sample(self.batch_size)
         else:
             # Generate indices for the batch.
             start_idx = (self.batch_iteration * self.batch_size) % self.s_train.shape[0]
