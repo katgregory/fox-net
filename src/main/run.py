@@ -88,6 +88,9 @@ def run_model():
                 FLAGS.cnn_num_filters
             )
 
+    saver = tf.train.Saver()
+    initialize_model(session, foxnet)
+
     dt = record_params()
 
     # Initialize a data manager.
@@ -103,17 +106,19 @@ def run_model():
         # frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 
         # Load the model
-        model_dir = './models/%s' % (FLAGS.model_dir)
+        model_dir = 'src/main/models/%s/' % (FLAGS.model_dir)
         model_name = '%s' % (FLAGS.model_dir)
         print('Loading model from dir: %s' % model_dir)
-        sv = tf.train.Supervisor(logdir=model_dir)
-        with sv.managed_session() as session:
-            if not sv.should_stop():
-                if FLAGS.train_online == True:
-                    foxnet.run_q_learning(data_manager, session)
+        saver.restore(session, model_dir)
+        # sv = tf.train.Supervisor(logdir=model_dir)
+        # with sv.managed_session() as session:
+
+            # if not sv.should_stop():
+            #     if FLAGS.train_online == True:
+            #         foxnet.run_q_learning(data_manager, session)
     else:
         # Train a new model.
-        initialize_model(session, foxnet)
+       
         print("dt = " + dt)
 
         print("##### TRAINING ############################################")
@@ -139,7 +144,6 @@ def run_model():
         model_name = '%s' % (FLAGS.model_dir)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
-        saver = tf.train.Saver()
         saver.save(session, model_dir + '/' + model_name)
         print('Saved model to dir: %s' % model_dir)
 
