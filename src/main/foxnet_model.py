@@ -218,7 +218,7 @@ class FoxNetModel(object):
                        epochs,
                        training_now=False,
                        dt="",
-                       plot=True,
+                       plot=False,
                        plot_every=20
                        ):
 
