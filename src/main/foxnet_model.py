@@ -64,11 +64,12 @@ class FoxNetModel(object):
 
         # Set up loss for Q-learning
         if q_learning:
+            gamma = 0.99
             self.rewards = ph(tf.float32, [None], name='rewards')
             self.q_values = self.probs
             self.actions = ph(tf.uint8, [None], name='action')
 
-            Q_samp = self.rewards + self.lr * tf.reduce_max(self.q_values, axis=1)
+            Q_samp = self.rewards + gamma * tf.reduce_max(self.q_values, axis=1)
             action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
             self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
 
