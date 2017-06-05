@@ -226,6 +226,7 @@ class FoxNetModel(object):
                        ):
 
         epoch_losses = []
+        epoch_losses_xlabels = []
         # if data_manager.is_online:
         #     reward_filename = results_dir + "q_reward/" + dt + ".txt"
         #     with open(reward_filename, 'a+') as f:
@@ -263,10 +264,11 @@ class FoxNetModel(object):
                 batch_count += 1
 
             # Plot loss every "plot_every" batches
-            if plot:
+            if plot and (batch_count / plot_every == 0):
                 total_loss = np.sum(losses) / data_manager.batch_size
                 epoch_losses.append(total_loss)
-                make_q_plot("loss", epoch_losses, results_dir, dt)
+                epoch_losses_xlabels.append(batch_count)
+                make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
             # with open(reward_filename, 'a') as f:
             #     f.write(batch_counter + "," + max(r_batch) + "\n")
 
@@ -286,8 +288,8 @@ def make_classification_plot(plot_name, train, validate_incrementally, validate,
     plt.close()
 
 # Overwrites previous plot each time
-def make_q_plot(plot_name, data, results_dir, dt):
-    line = plt.plot(data, label="Q " + plot_name)
+def make_q_plot(plot_name, x, y, results_dir, dt):
+    line = plt.plot(x, y, label="Q " + plot_name)
     plt.legend()
     plt.grid(True)
     plt.title(plot_name)
