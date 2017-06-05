@@ -12,10 +12,9 @@ from scipy.misc import imresize
 # COMMAND LINE ARGUMENTS
 tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
-tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn")
+tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn, dqn_3d")
 tf.app.flags.DEFINE_bool("validate", False, "Validate after all training is complete")
 tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every epoch")
-tf.app.flags.DEFINE_bool("multi_frame_state", False, "If false, overrides num_frames & reduces dimension of data")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
 tf.app.flags.DEFINE_bool("plot", True, "")
@@ -82,7 +81,6 @@ def run_model():
                 FLAGS.image_height,
                 FLAGS.image_width,
                 FLAGS.num_channels,
-                FLAGS.multi_frame_state,
                 FLAGS.frames_per_state,
                 ACTIONS,
                 FLAGS.cnn_filter_size,
@@ -108,10 +106,10 @@ def run_model():
         # frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 
         # Load the model
-        model_dir = 'src/main/models/%s/' % (FLAGS.model_dir)
+        model_dir = './models/%s/' % (FLAGS.model_dir)
         model_name = '%s' % (FLAGS.model_dir)
         print('Loading model from dir: %s' % model_dir)
-        saver.restore(session, model_dir)
+        saver.restore(session, tf.train.latest_checkpoint(model_dir))
         # sv = tf.train.Supervisor(logdir=model_dir)
         # with sv.managed_session() as session:
 
@@ -126,7 +124,7 @@ def run_model():
         print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session)
+            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs)
         else:
             foxnet.run_classification(data_manager,
                                       session,
@@ -163,7 +161,7 @@ def get_data_params():
         "num_images": FLAGS.num_images,
         "width": FLAGS.image_width,
         "height": FLAGS.image_height,
-        "multi_frame_state": FLAGS.multi_frame_state,
+        "multi_frame_state": FLAGS.model == "dqn_3d",
         "frames_per_state": FLAGS.frames_per_state,
         "actions": ACTIONS,
         "eval_proportion": FLAGS.eval_proportion,
