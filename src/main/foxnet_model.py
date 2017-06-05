@@ -262,7 +262,7 @@ class FoxNetModel(object):
                     self.saver.save(session, model_path)
 
                 # Plot loss every "plot_every" batches
-                if plot and (total_batch_count / plot_every == 0):
+                if plot and (total_batch_count % plot_every == 0):
                     total_loss = np.sum(losses) / data_manager.s_train.shape[0]
                     epoch_losses.append(total_loss)
                     epoch_losses_xlabels.append(total_batch_count)
@@ -270,16 +270,8 @@ class FoxNetModel(object):
                 # with open(reward_filename, 'a') as f:
                 #     f.write(batch_counter + "," + max(r_batch) + "\n")
 
-            # Plot loss every "plot_every" batches
-            if plot and (batch_count / plot_every == 0):
-                total_loss = np.sum(losses) / data_manager.batch_size
-                epoch_losses.append(total_loss)
-                epoch_losses_xlabels.append(batch_count)
-                make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
-            # with open(reward_filename, 'a') as f:
-            #     f.write(batch_counter + "," + max(r_batch) + "\n")
-            batch_count += 1
-            total_batch_count += 1
+                batch_count += 1
+                total_batch_count += 1
 
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"
