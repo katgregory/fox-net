@@ -128,7 +128,7 @@ def run_model():
         print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, plot=False, dt=dt) # TODO: plot=FLAGS.plot
+            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, plot=FLAGS.plot, dt=dt)
         else:
             foxnet.run_classification(data_manager,
                                       session,
