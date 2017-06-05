@@ -54,7 +54,7 @@ def initialize_model(session, model):
     print("##### MODEL ###############################################")
     session.run(tf.global_variables_initializer())
     print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
-    print(FLAGS.__flags)
+    print("Flags: " + str(FLAGS.__flags))
     return model
 
 def record_params():
