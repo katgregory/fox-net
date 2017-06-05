@@ -184,7 +184,6 @@ class FoxNetModel(object):
             print(format_list(validate_losses))
             print("Validation Accuracies: ")
             print(format_list(validate_accuracies))
-        print("##### DONE TRAINING #######################################")
 
         # Plot
         if plot:

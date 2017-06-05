@@ -59,8 +59,8 @@ def load_datasets(tier, params):
         print("Creating states:")
         n_frames = params["frames_per_state"]
         states = []
-        for i in tqdm(xrange(len(images) - n_frames + 1)):
-            state = tuple(images[x][None, :, :, :] for x in xrange(i, i + n_frames))
+        for i in tqdm(np.arange(len(images) - n_frames + 1)):
+            state = tuple(images[x][None, :, :, :] for x in np.arange(i, i + n_frames))
             states.append(np.concatenate(state, axis=0))
         actions = actions[n_frames - 1:] # Also remove (n_frames - 1) actions
         scores = scores[n_frames - 1:] # Also remove (n_frames - 1) actions
@@ -96,7 +96,6 @@ def load_datasets(tier, params):
     print('Test actions shape: ' + str(a_test.shape))
     print('Test scores shape: ' + str(scores_test.shape))
     print('Test healths shape: ' + str(h_test.shape))
-    print("##### DONE LOADING DATA ###################################")
 
     # Returns
     return (s_train, a_train, scores_train, h_train), (s_test, a_test, scores_test, h_test)
