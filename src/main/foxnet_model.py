@@ -218,19 +218,21 @@ class FoxNetModel(object):
                        session,
                        epochs,
                        model_path,
+                       results_dir,
                        training_now=False,
                        dt="",
                        plot=False,
-                       plot_every=20
+                       plot_every=20,
                        ):
 
         epoch_losses = []
+        epoch_losses_xlabels = []
         # if data_manager.is_online:
         #     reward_filename = results_dir + "q_reward/" + dt + ".txt"
         #     with open(reward_filename, 'a+') as f:
         #         f.write("Q learning rewards (max of each epoch):\n")
 
-
+        total_batch_count = 0
         for e in range(epochs):
             data_manager.init_epoch()
             losses = []
@@ -248,7 +250,7 @@ class FoxNetModel(object):
                     self.rewards: r_batch,
                     self.actions: a_batch,
                     self.is_training: training_now}
-                loss = session.run(variables, feed_dict=feed_dict)
+                loss, _ = session.run(variables, feed_dict=feed_dict)
 
                 # Aggregate performance stats
                 losses.append(loss * actual_batch_size)
@@ -261,15 +263,17 @@ class FoxNetModel(object):
                     # Anneal epsilon
                     data_manager.epsilon *= 0.9
 
-                batch_count += 1
+                # Plot loss every "plot_every" batches
+                if plot and (total_batch_count % plot_every == 0):
+                    total_loss = np.sum(losses) / data_manager.s_train.shape[0]
+                    epoch_losses.append(total_loss)
+                    epoch_losses_xlabels.append(total_batch_count)
+                    make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
+                # with open(reward_filename, 'a') as f:
+                #     f.write(batch_counter + "," + max(r_batch) + "\n")
 
-            # Plot loss every "plot_every" batches
-            if plot:
-                total_loss = np.sum(losses) / data_manager.s_train.shape[0]
-                epoch_losses.append(total_loss)
-                make_q_plot("loss", epoch_losses, results_dir, dt)
-            # with open(reward_filename, 'a') as f:
-            #     f.write(batch_counter + "," + max(r_batch) + "\n")
+                batch_count += 1
+                total_batch_count += 1
 
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"
@@ -287,12 +291,12 @@ def make_classification_plot(plot_name, train, validate_incrementally, validate,
     plt.close()
 
 # Overwrites previous plot each time
-def make_q_plot(plot_name, data, results_dir, dt):
-    line = plt.plot(data, label="Q " + plot_name)
+def make_q_plot(plot_name, x, y, results_dir, dt):
+    line = plt.plot(x, y, label="Q " + plot_name)
     plt.legend()
     plt.grid(True)
     plt.title(plot_name)
     plt.xlabel('batch number')
-    plt.ylabel(lot_name)
+    plt.ylabel(plot_name)
     plt.savefig(results_dir + "q_" + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()

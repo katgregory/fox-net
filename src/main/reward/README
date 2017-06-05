@@ -5,5 +5,5 @@ specified, the original input images are renamed.
 Sample usage:
 /usr/bin/python2.7 /home/josh/grade_17/cs231n/fox-net/src/reward/knn_extract_reward.py \
     --template_dir=/home/josh/grade_17/cs231n/fox-net/data/reward/templates/* \
-    --input_dir=/home/josh/grade_17/cs231n/fox-net/data/labeled_051517_2114/* \
-    --output_dir=/home/josh/grade_17/cs231n/fox-net/data/reward/output/
+    --input_dir=/home/josh/grade_17/cs231n/fox-net/data/data_score_health_test/data/* \
+    --output_dir=/home/josh/grade_17/cs231n/fox-net/data/data_score_health_test_classified/

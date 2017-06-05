@@ -22,7 +22,7 @@ def load_datasets(tier, params):
     healths = []
     action_counter = Counter()
 
-    print(params['actions'])
+    print("Actions: " + str(params['actions']))
 
     for dirname in tqdm(os.listdir(params["data_dir"])):
         for filename in tqdm(os.listdir(params["data_dir"] + '/' + dirname)):

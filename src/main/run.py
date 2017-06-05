@@ -54,7 +54,7 @@ def initialize_model(session, model):
     print("##### MODEL ###############################################")
     session.run(tf.global_variables_initializer())
     print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
-    print(FLAGS.__flags)
+    print("Flags: " + str(FLAGS.__flags))
     return model
 
 def record_params():
@@ -99,8 +99,11 @@ def run_model():
     # Initialize a data manager.
     data_manager = DataManager()
     if FLAGS.train_online:
-        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, FLAGS.frames_per_state,
-                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.01, FLAGS.user_overwrite)
+        frames_per_state = 1
+        if FLAGS.model == "dqn_3d":
+            frames_per_state = FLAGS.frames_per_state
+        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, frames_per_state,
+                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.01, Flags.user_overwrite)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 
@@ -128,7 +131,8 @@ def run_model():
         print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, plot=False, dt=dt) # TODO: plot=FLAGS.plot
+            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, results_dir=FLAGS.results_dir,
+                                  plot=FLAGS.plot, dt=dt)
         else:
             foxnet.run_classification(data_manager,
                                       session,
