@@ -215,25 +215,27 @@ class FoxNetModel(object):
     def run_q_learning(self,
                        data_manager,
                        session,
+                       epochs,
                        training_now=False
                        ):
-        data_manager.init_epoch()
+        for e in range(epochs):
+            data_manager.init_epoch()
 
-        while data_manager.has_next_batch():
-            # Perform training step.
-            s_batch, a_batch, r_batch, _ = data_manager.get_next_batch()
-            batch_reward = sum(r_batch)
+            while data_manager.has_next_batch():
+                # Perform training step.
+                s_batch, a_batch, r_batch, _ = data_manager.get_next_batch()
+                batch_reward = sum(r_batch)
 
-            variables = [self.loss, self.train_step]
-            feed_dict = {
-                self.X: s_batch,
-                self.rewards: r_batch,
-                self.actions: a_batch,
-                self.is_training: training_now}
-            loss = session.run(variables, feed_dict=feed_dict)
+                variables = [self.loss, self.train_step]
+                feed_dict = {
+                    self.X: s_batch,
+                    self.rewards: r_batch,
+                    self.actions: a_batch,
+                    self.is_training: training_now}
+                loss = session.run(variables, feed_dict=feed_dict)
 
-            print("loss: ", loss)
-            print("batch reward: ", batch_reward)
+                print("loss: ", loss)
+                print("batch reward: ", batch_reward)
 
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"
