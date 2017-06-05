@@ -80,10 +80,13 @@ class DataManager:
 
             # Play the game for base_size frames.
             # TODO Introduce a new parameter specifying how many frames to play each time we update parameters.
-            for i in range(self.batch_size):
+            i = 0
+            while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
+                i += 1
                 # Store the most recent frame and get the past frames_per_state frames that define the current state.
-                replay_buffer_index = self.replay_buffer.store_frame(frame)
+                replay_buffer_index = self.replay_buffer.store_frame(np.squeeze(frame))
                 state = self.replay_buffer.encode_recent_observation()
+                state = np.expand_dims(state, 0)
 
                 # Get the best action to take in the current state.
                 feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}

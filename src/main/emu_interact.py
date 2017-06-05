@@ -4,7 +4,7 @@ import os, sys, struct
 import time
 from scipy.misc import imresize
 from matplotlib import pyplot as plt
-import cv2
+# import cv2
 
 
 class FrameReader():
@@ -47,8 +47,8 @@ class FrameReader():
 		full_img = np.reshape(img_flat, (self.HEIGHT, self.WIDTH, self.DEPTH))[:,::-1,:]
 		img = imresize(full_img, (self.out_height, self.out_width, self.DEPTH))
 
-		cv2.imshow('img', img)
-		cv2.waitKey(1)
+		# cv2.imshow('img', img)
+		# cv2.waitKey(1)
 
 		img = np.expand_dims(img, axis=0)
 
