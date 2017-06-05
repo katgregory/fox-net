@@ -7,4 +7,6 @@ src/main/models/*
 src/main/results/*
 results/*
 models/*
-data/
+data/data_053017_1438/*
+data/data_051617/*
+data/data_053017/*

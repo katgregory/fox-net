@@ -101,7 +101,7 @@ class FoxNet(object):
             activation = tf.nn.relu
         )
 
-        magic_number = 196608
+        magic_number = 98304
         conv3_flat = tf.reshape(conv3, [-1, magic_number])
 
         affine_relu = tf.layers.dense(

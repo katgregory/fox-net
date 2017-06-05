@@ -64,11 +64,12 @@ class FoxNetModel(object):
 
         # Set up loss for Q-learning
         if q_learning:
+            gamma = 0.99
             self.rewards = ph(tf.float32, [None], name='rewards')
             self.q_values = self.probs
             self.actions = ph(tf.uint8, [None], name='action')
 
-            Q_samp = self.rewards + self.lr * tf.reduce_max(self.q_values, axis=1)
+            Q_samp = self.rewards + gamma * tf.reduce_max(self.q_values, axis=1)
             action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
             self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
 
@@ -190,8 +191,8 @@ class FoxNetModel(object):
 
         # Plot
         if plot:
-            make_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
-            make_plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
+            make_classification_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
+            make_classification_plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
 
@@ -216,15 +217,30 @@ class FoxNetModel(object):
                        data_manager,
                        session,
                        epochs,
-                       training_now=False
+                       model_path,
+                       training_now=False,
+                       dt="",
+                       plot=False,
+                       plot_every=20
                        ):
+
+        epoch_losses = []
+        # if data_manager.is_online:
+        #     reward_filename = results_dir + "q_reward/" + dt + ".txt"
+        #     with open(reward_filename, 'a+') as f:
+        #         f.write("Q learning rewards (max of each epoch):\n")
+
+
         for e in range(epochs):
             data_manager.init_epoch()
+            losses = []
+            batch_count = 0
 
             while data_manager.has_next_batch():
                 # Perform training step.
                 s_batch, a_batch, r_batch, _ = data_manager.get_next_batch()
                 batch_reward = sum(r_batch)
+                actual_batch_size = data_manager.batch_size
 
                 variables = [self.loss, self.train_step]
                 feed_dict = {
@@ -234,13 +250,29 @@ class FoxNetModel(object):
                     self.is_training: training_now}
                 loss = session.run(variables, feed_dict=feed_dict)
 
+                # Aggregate performance stats
+                losses.append(loss * actual_batch_size)
+
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
+
+                if batch_count % 250 == 0:
+                    self.saver.save(session, model_path)
+
+                batch_count += 1
+
+            # Plot loss every "plot_every" batches
+            if plot:
+                total_loss = np.sum(losses) / data_manager.s_train.shape[0]
+                epoch_losses.append(total_loss)
+                make_q_plot("loss", epoch_losses, results_dir, dt)
+            # with open(reward_filename, 'a') as f:
+            #     f.write(batch_counter + "," + max(r_batch) + "\n")
 
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"
 
-def make_plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
+def make_classification_plot(plot_name, train, validate_incrementally, validate, results_dir, dt):
     train_line = plt.plot(train, label="Training " + plot_name)
     if validate_incrementally:
         validate_line = plt.plot(validate, label="Validation " + plot_name)
@@ -249,5 +281,16 @@ def make_plot(plot_name, train, validate_incrementally, validate, results_dir, d
     plt.title(plot_name)
     plt.xlabel('epoch number')
     plt.ylabel('epoch ' + plot_name)
-    plt.savefig(results_dir + plot_name + "/" + plot_name + "_" + dt + ".png")
+    plt.savefig(results_dir + "classification_" + plot_name + "/" + plot_name + "_" + dt + ".png")
+    plt.close()
+
+# Overwrites previous plot each time
+def make_q_plot(plot_name, data, results_dir, dt):
+    line = plt.plot(data, label="Q " + plot_name)
+    plt.legend()
+    plt.grid(True)
+    plt.title(plot_name)
+    plt.xlabel('batch number')
+    plt.ylabel(lot_name)
+    plt.savefig(results_dir + "q_" + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()
