@@ -13,7 +13,7 @@ class DataManager:
         self.is_online = False
 
     def init_online(self, foxnet, session, batch_size, replay_buffer_size, frames_per_state, ip, image_height,
-                    image_width, epsilon, user_overwrite):
+                    image_width, epsilon, user_overwrite=False):
         self.is_online = True
         self.foxnet = foxnet
         self.session = session
