@@ -14,7 +14,7 @@ X_SIZE = 26
 
 class RewardExtractor():
     def __init__(self):
-        template_dir = './src/main/reward/templates/*'
+        template_dir = './data/reward/templates/*'
         self.templates = self.load_template_images(template_dir)
 
     def load_template_images(self, dir, filter_image_flag=True):

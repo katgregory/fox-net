@@ -216,6 +216,7 @@ class FoxNetModel(object):
                        data_manager,
                        session,
                        epochs,
+                       model_path,
                        training_now=False,
                        dt="",
                        plot=False,
@@ -232,6 +233,7 @@ class FoxNetModel(object):
         for e in range(epochs):
             data_manager.init_epoch()
             losses = []
+            batch_count = 0
 
             while data_manager.has_next_batch():
                 # Perform training step.
@@ -252,6 +254,11 @@ class FoxNetModel(object):
 
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
+
+                if batch_count % 250 == 0:
+                    self.saver.save(session, model_path)
+
+                batch_count += 1
 
             # Plot loss every "plot_every" batches
             if plot:

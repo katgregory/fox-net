@@ -32,7 +32,7 @@ tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
 tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 
 # HYPERPARAMETERS
-tf.app.flags.DEFINE_integer("frames_per_state", 3, "")
+tf.app.flags.DEFINE_integer("frames_per_state", 1, "")
 tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 
@@ -87,7 +87,11 @@ def run_model():
                 FLAGS.cnn_num_filters
             )
 
-    saver = tf.train.Saver()
+    foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
+    model_dir = './models/%s' % (FLAGS.model_dir)
+    model_name = '%s' % (FLAGS.model_dir)
+    model_path = model_dir + '/' + model_name
+
     initialize_model(session, foxnet)
 
     dt = record_params()
@@ -109,7 +113,7 @@ def run_model():
         model_dir = './models/%s/' % (FLAGS.model_dir)
         model_name = '%s' % (FLAGS.model_dir)
         print('Loading model from dir: %s' % model_dir)
-        saver.restore(session, tf.train.latest_checkpoint(model_dir))
+        foxnet.saver.restore(session, tf.train.latest_checkpoint(model_dir))
         # sv = tf.train.Supervisor(logdir=model_dir)
         # with sv.managed_session() as session:
 
@@ -124,7 +128,7 @@ def run_model():
         print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, plot=False, dt=dt) # TODO: plot=FLAGS.plot
+            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, plot=False, dt=dt) # TODO: plot=FLAGS.plot
         else:
             foxnet.run_classification(data_manager,
                                       session,
@@ -144,7 +148,7 @@ def run_model():
         model_name = '%s' % (FLAGS.model_dir)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
-        saver.save(session, model_dir + '/' + model_name)
+        foxnet.saver.save(session, model_dir + '/' + model_name)
         print('Saved model to dir: %s' % model_dir)
 
     # Validate the model
