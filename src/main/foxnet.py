@@ -104,17 +104,9 @@ class FoxNet(object):
             activation=tf.nn.relu
         )
 
-        conv3 = tf.layers.conv3d(
-            inputs=conv2,
-            filters=n_filters * 2,
-            kernel_size=3,
-            padding="same",
-            activation=tf.nn.relu
-        )
-
-        # Flatten: (?, 3, 48, 64, 64) to (?, 589824)
-        magic_number = frames_per_state * 196608
-        return tf.reshape(conv3, [-1, magic_number])
+        # Flatten: (?, 3, 48, 64, 32) to (?, 589824)
+        magic_number = frames_per_state * 98304
+        return tf.reshape(conv2, [-1, magic_number])
 
 
     def DQN(self, X, y, n_labels):
