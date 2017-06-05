@@ -106,10 +106,10 @@ def run_model():
         # frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
 
         # Load the model
-        model_dir = 'src/main/models/%s/' % (FLAGS.model_dir)
+        model_dir = './models/%s/' % (FLAGS.model_dir)
         model_name = '%s' % (FLAGS.model_dir)
         print('Loading model from dir: %s' % model_dir)
-        saver.restore(session, model_dir)
+        saver.restore(session, tf.train.latest_checkpoint(model_dir))
         # sv = tf.train.Supervisor(logdir=model_dir)
         # with sv.managed_session() as session:
 
