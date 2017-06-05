@@ -94,7 +94,11 @@ def save_input_images(templates, input_images, labels, output_dir=None):
     '''
     template_values = []
     for template_filename, _ in templates:
-        template_name = template_filename[template_filename.rfind('/') + 1:template_filename.rfind('.')]
+        end_of_digit_index = template_filename.rfind('.')
+        if '_' in template_filename:
+            end_of_digit_index = template_filename.rfind('_')
+
+        template_name = template_filename[template_filename.rfind('/') + 1:end_of_digit_index]
         template_values.append(int(template_name))
 
     if output_dir and '/' not in output_dir:
