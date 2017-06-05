@@ -232,7 +232,7 @@ class FoxNetModel(object):
         #     with open(reward_filename, 'a+') as f:
         #         f.write("Q learning rewards (max of each epoch):\n")
 
-
+        total_batch_count = 0
         for e in range(epochs):
             data_manager.init_epoch()
             losses = []
@@ -261,7 +261,14 @@ class FoxNetModel(object):
                 if batch_count % 250 == 0:
                     self.saver.save(session, model_path)
 
-                batch_count += 1
+                # Plot loss every "plot_every" batches
+                if plot and (total_batch_count / plot_every == 0):
+                    total_loss = np.sum(losses) / data_manager.s_train.shape[0]
+                    epoch_losses.append(total_loss)
+                    epoch_losses_xlabels.append(total_batch_count)
+                    make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
+                # with open(reward_filename, 'a') as f:
+                #     f.write(batch_counter + "," + max(r_batch) + "\n")
 
             # Plot loss every "plot_every" batches
             if plot and (batch_count / plot_every == 0):
@@ -271,6 +278,8 @@ class FoxNetModel(object):
                 make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
             # with open(reward_filename, 'a') as f:
             #     f.write(batch_counter + "," + max(r_batch) + "\n")
+            batch_count += 1
+            total_batch_count += 1
 
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"
