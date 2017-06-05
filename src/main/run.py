@@ -44,6 +44,7 @@ tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
+tf.app.flags.DEFINE_integer("replay_buffer_size", 1000, "")
 
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'n']
 ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'do nothing']
@@ -93,7 +94,8 @@ def run_model():
     # Initialize a data manager.
     data_manager = DataManager()
     if FLAGS.train_online:
-        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
+        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, FLAGS.frames_per_state,
+                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 
