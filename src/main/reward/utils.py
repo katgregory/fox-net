@@ -1,6 +1,6 @@
 import cv2
 import glob
-
+import re
 
 Y_MIN = 65
 Y_SIZE = 31
@@ -13,9 +13,10 @@ B_MEAN = 75
 RGB_TOL = 15
 
 
+pattern = re.compile('.*i=(\d+)_a=(\w).*.png')
 def iteration_from_filename(filename):
-    name = filename[filename.rfind('/i=') + 4:]
-    iteration = name[:name.find('_')]
+    match = re.search(pattern, filename)
+    iteration = match.group(1)
     return int(iteration)
 
 

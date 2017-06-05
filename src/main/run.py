@@ -95,7 +95,10 @@ def run_model():
     # Initialize a data manager.
     data_manager = DataManager()
     if FLAGS.train_online:
-        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, FLAGS.frames_per_state,
+        frames_per_state = 1
+        if FLAGS.model == "dqn_3d":
+            frames_per_state = FLAGS.frames_per_state
+        data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, frames_per_state,
                                  FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
