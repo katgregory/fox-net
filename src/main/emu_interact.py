@@ -4,6 +4,7 @@ import os, sys, struct
 import time
 from scipy.misc import imresize
 from matplotlib import pyplot as plt
+import keylogger.keylogger as keylogger
 # import cv2
 
 
@@ -18,6 +19,18 @@ class FrameReader():
 		self.out_height = out_height
 		self.out_width = out_width
 		self.ip = ip
+
+		self.actions = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
+
+		self.modifier_mappings = {
+			'left shift': 'a',
+			'right shift': 'd',
+			'left alt': 'w',
+			'right alt': 's',
+			'left ctrl': 'n',
+			'right ctrl': 'n',
+		}
+
 		self._launch_socket()
 
 	def _launch_socket(self):
@@ -66,3 +79,21 @@ class FrameReader():
 			'n': 0
 		}
 		self.s.send(struct.pack('I',action_map[action]))
+
+	# Get user input for user-overwrite mode
+	def get_keys(self):
+		keys, modifiers = keylogger.log2()
+
+		# If no key pressed, set to 'n'
+		if keys == None:
+			keys = 'n'
+		# Don't get movement if shoot
+		elif keys == 'j':
+			return self.actions.index(keys)
+
+		# Get movement as modifiers, as these register key holds
+		for mod in modifiers.keys():
+			if modifiers[mod] == True:
+				keys = self.modifier_mappings[mod]
+
+		return self.actions.index(keys)

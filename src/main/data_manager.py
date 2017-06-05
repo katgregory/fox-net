@@ -20,6 +20,9 @@ class DataManager:
         self.batch_size = batch_size
         self.epsilon = epsilon
 
+        # Allow player to overwrite for faster learning
+        self.user_overwrite = user_overwrite
+
         # Initialize ReplayBuffer.
         self.replay_buffer = ReplayBuffer(replay_buffer_size, frames_per_state)
 
@@ -34,6 +37,7 @@ class DataManager:
 
     def init_offline(self, use_test_set, data_params, batch_size):
         self.is_online = False
+        self.user_overwrite = False
 
         # Load the two pertinent datasets into train_dataset and eval_dataset
         if use_test_set:
@@ -92,11 +96,18 @@ class DataManager:
                 feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
                 q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
 
-                # e-greedy exploration.
-                if np.random.uniform() >= self.epsilon:
-                    action = np.argmax(q_values_it)
-                else:
-                    action = np.random.choice(np.arange(self.foxnet.num_actions))
+                action = 7
+
+                if self.user_overwrite:
+                    action = self.frame_reader.get_keys()
+
+                # If in user-overwrite and player does not input, do e-greedy
+                if action == 7:
+                    # e-greedy exploration.
+                    if np.random.uniform() >= self.epsilon:
+                        action = np.argmax(q_values_it)
+                    else:
+                        action = np.random.choice(np.arange(self.foxnet.num_actions))
 
                 # Send action to emulator.
                 self.frame_reader.send_action(self.foxnet.available_actions[action])

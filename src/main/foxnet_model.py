@@ -258,6 +258,8 @@ class FoxNetModel(object):
 
                 if batch_count % 250 == 0:
                     self.saver.save(session, model_path)
+                    # Anneal epsilon
+                    data_manager.epsilon *= 0.9
 
                 batch_count += 1
 

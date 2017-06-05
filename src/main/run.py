@@ -25,7 +25,7 @@ tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved 
 tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
-
+tf.app.flags.DEFINE_bool("user_overwrite", False, "")
 tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback.")
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
@@ -45,8 +45,8 @@ tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 tf.app.flags.DEFINE_integer("replay_buffer_size", 1000, "")
 
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'n']
-ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'do nothing']
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -100,7 +100,7 @@ def run_model():
     data_manager = DataManager()
     if FLAGS.train_online:
         data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, FLAGS.frames_per_state,
-                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.1)
+                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.01, FLAGS.user_overwrite)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 
