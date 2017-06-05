@@ -27,7 +27,6 @@ class FoxNetModel(object):
                 height,
                 width,
                 n_channels,
-                multi_frame_state,
                 frames_per_state,
                 available_actions,
                 cnn_filter_size,
@@ -42,7 +41,7 @@ class FoxNetModel(object):
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
         # count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
-        if multi_frame_state:
+        if model == "dqn_3d":
             self.X = ph(tf.float32, [None, frames_per_state, height, width, n_channels])
         else:
             self.X = ph(tf.float32, [None, height, width, n_channels])
@@ -52,14 +51,16 @@ class FoxNetModel(object):
         foxnet = FoxNet()
 
         # Build net
-        if model == "fc": # Only works if !multi_frame_state
+        if model == "fc":
             self.probs = foxnet.fully_connected(self.X, self.y, self.num_actions)
-        elif model == "simple_cnn": # Only works if !multi_frame_state
-            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, multi_frame_state, frames_per_state, self.is_training)
+        elif model == "simple_cnn":
+            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, self.is_training)
         elif model == "dqn":
             self.probs = foxnet.DQN(self.X, self.y, self.num_actions)
+        elif model == "dqn_3d":
+            self.probs = foxnet.DQN_3D(self.X, self.y, self.num_actions, frames_per_state)
         else:
-            raise ValueError("Invalid model specified. Valid options are: 'fcc', 'simple_cnn', 'dqn'")
+            raise ValueError("Invalid model specified. Valid options are: 'fcc', 'simple_cnn', 'dqn', 'dqn_3d'")
 
         # Set up loss for Q-learning
         if q_learning:
