@@ -96,7 +96,6 @@ def load_datasets(tier, params):
     print('Test actions shape: ' + str(a_test.shape))
     print('Test scores shape: ' + str(scores_test.shape))
     print('Test healths shape: ' + str(h_test.shape))
-    print("##### DONE LOADING DATA ###################################")
 
     # Returns
     return (s_train, a_train, scores_train, h_train), (s_test, a_test, scores_test, h_test)
