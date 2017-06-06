@@ -258,13 +258,13 @@ class FoxNetModel(object):
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
 
-                if batch_count % 250 == 0:
+                if batch_count % 100 == 0:
                     self.saver.save(session, model_path)
                     # Anneal epsilon
                     data_manager.epsilon *= 0.9
 
                 # Plot loss every "plot_every" batches
-                if plot and (total_batch_count % plot_every == 0):
+                if not data_manager.is_online and plot and (total_batch_count % plot_every == 0):
                     total_loss = np.sum(losses) / data_manager.s_train.shape[0]
                     epoch_losses.append(total_loss)
                     epoch_losses_xlabels.append(total_batch_count)
