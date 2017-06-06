@@ -264,8 +264,8 @@ class FoxNetModel(object):
                     data_manager.epsilon *= 0.9
 
                 # Plot loss every "plot_every" batches
-                if not data_manager.is_online and plot and (total_batch_count % plot_every == 0):
-                    total_loss = np.sum(losses) / data_manager.s_train.shape[0]
+                if plot and (total_batch_count % plot_every == 0):
+                    total_loss = np.sum(losses) / actual_batch_size
                     epoch_losses.append(total_loss)
                     epoch_losses_xlabels.append(total_batch_count)
                     make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
