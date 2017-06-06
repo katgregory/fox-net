@@ -20,7 +20,7 @@ class FrameReader():
 		self.out_width = out_width
 		self.ip = ip
 
-		self.actions = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
+		self.actions = ['w', 'a', 's', 'd', 'j', 'k', 'n']
 
 		self.modifier_mappings = {
 			'left shift': 'a',
@@ -90,6 +90,8 @@ class FrameReader():
 		# Don't get movement if shoot
 		elif keys == 'j':
 			return self.actions.index(keys)
+		elif keys not in actions:
+			keys = 'n'
 
 		# Get movement as modifiers, as these register key holds
 		for mod in modifiers.keys():

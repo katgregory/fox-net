@@ -45,8 +45,8 @@ tf.app.flags.DEFINE_integer("num_channels", 3, "")
 tf.app.flags.DEFINE_integer("batch_size", 20, "")
 tf.app.flags.DEFINE_integer("replay_buffer_size", 1000, "")
 
-ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
-ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
+ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'n']
+ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
