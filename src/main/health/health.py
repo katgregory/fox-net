@@ -35,5 +35,5 @@ class HealthExtractor():
 		if health_ratio <= 0.05:
 			health_ratio = 0.0
 
-		health_ratio = int(100*health_ratio)
+		health_ratio = int(10*health_ratio)
 		return health_ratio

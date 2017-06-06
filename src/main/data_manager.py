@@ -35,6 +35,9 @@ class DataManager:
         frame, full_image = self.frame_reader.read_frame()
         self.frames = [frame]
 
+        # Remember the health from the previous frame.
+        self.prev_health = None
+
     def init_offline(self, use_test_set, data_params, batch_size):
         self.is_online = False
         self.user_overwrite = False
@@ -119,6 +122,13 @@ class DataManager:
                 # Get the reward (score + health).
                 score_reward = self.reward_extractor.get_reward(full_image)
                 health_reward = self.health_extractor(full_image, offline=False)
+
+                if self.prev_health and self.prev_health > 0 and health_reward == 0:
+                    # Agent just died.
+                    print('INFO: Agent just died. Setting health reward to -100')
+                    health_reward = -100
+                self.prev_health = health_reward
+
                 reward = score_reward + health_reward
                 max_score_batch = max(score_reward, max_score_batch)
 
