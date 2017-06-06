@@ -13,6 +13,13 @@ B_MEAN = 75
 RGB_TOL = 15
 
 
+def print_probs(probs, template_values):
+    if probs is None:
+        print('')
+    else:
+        print('\t%s' % [int(x * 100) / 100.0 for (y, x) in sorted(zip(template_values, probs))])
+
+
 data_pattern = re.compile('.*i=(\d+)_a=(\w).*.png')
 def iteration_from_filename(filename):
     match = re.search(data_pattern, filename)

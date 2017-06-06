@@ -24,6 +24,9 @@ def get_options():
     parser.add_option('-o', '--output_dir', dest='output_dir',
                       help='(optional) If specified, saves images to output_dir instead of renaming them.')
 
+    parser.add_option('--overwrite', dest='overwrite', action='store_true',
+                      help='(optional) If specified, replaces the s_=\\d at the end of each filename.')
+
     options, args = parser.parse_args()
     return options, args
 
@@ -66,28 +69,31 @@ def classify_images(templates, input_images):
 
     # Classify each image.
     labels = []
+    labels_probs = []
     for _, hundreds, tens, ones in input_images:
-        labels.append((classify_digit_pearson(hundreds, template_mat),
-                       classify_digit_pearson(tens, template_mat),
-                       classify_digit_pearson(ones, template_mat)))
+        h, hp = classify_digit_pearson(hundreds, template_mat)
+        t, tp = classify_digit_pearson(tens, template_mat)
+        o, op = classify_digit_pearson(ones, template_mat)
+        labels.append((h, t, o))
+        labels_probs.append((hp, tp, op))
 
-    return labels
+    return labels, labels_probs
 
 
 def classify_digit_inner_product(input_digit, template_mat):
-    return np.argmax(np.dot(input_digit, template_mat))
+    return np.argmax(np.dot(input_digit, template_mat)), np.dot(input_digit, template_mat)
 
 
 def classify_digit_pearson(input_digit, template_mat):
     pearson_correlations = [pearsonr(input_digit, template_mat[:, index].flatten())[0] for index in
                             range(template_mat.shape[1])]
     max_pearson_correlation = np.max(pearson_correlations)
-    if max_pearson_correlation < 0.5 or math.isnan(max_pearson_correlation):
-        return None
-    return np.argmax(pearson_correlations)
+    if max_pearson_correlation < 0.9 or math.isnan(max_pearson_correlation):
+        return None, None
+    return np.argmax(pearson_correlations), pearson_correlations
 
 
-def save_input_images(templates, input_images, labels, output_dir=None):
+def save_input_images(templates, input_images, labels, labels_probs=None, output_dir=None, overwrite=False):
     '''
     If output_dir is none, renames each original input image with its reward appended. Otherwise, saves a new copy of
     each image with its reward appended.
@@ -95,11 +101,12 @@ def save_input_images(templates, input_images, labels, output_dir=None):
     template_values = []
     for template_filename, _ in templates:
         template_values.append(utils.digit_from_template_filename(template_filename))
+    print('Template values: %s' % str(template_values))
 
     if output_dir and '/' not in output_dir:
         output_dir += '/'
 
-    prev_reward = 0
+    rewards = [0]
 
     for index, (input_filename, _, _, _) in enumerate(input_images):
         input_base = input_filename[:input_filename.rfind('.')]
@@ -107,26 +114,36 @@ def save_input_images(templates, input_images, labels, output_dir=None):
         input_name = input_base[input_base.rfind('/') + 1:]
 
         if None in labels[index]:
-            reward = 0
+            reward = None
         else:
             reward = template_values[labels[index][0]] * 100 + \
                      template_values[labels[index][1]] * 10 + \
                      template_values[labels[index][2]]
 
             # Hack to correct for various digits incorrectly replaced with a 0 in the hundreds digit.
-            reward %= 100
+            reward %= 150
 
         # Hack to correct for squished digits looking like 1's.
-        if prev_reward > 0 and (prev_reward > reward or reward - prev_reward > 10):
-            reward = prev_reward
+        if reward is None or \
+                (reward > 0 and rewards[-1] > 0 and abs(rewards[-1] - reward) > 6): #(prev_reward > reward or reward - prev_reward > 2):
+            reward = rewards[-1]
+        rewards.append(reward)
 
         if output_dir is None:
-            os.rename(input_filename, input_base + '_s=' + str(reward) + input_extension)
+            if overwrite and '_s=' in input_base:
+                input_base = input_base[:input_base.rfind('_s=')]
+            output_filename = input_base + '_s=' + str(reward) + input_extension
+            os.rename(input_filename, output_filename)
         else:
-            cv2.imwrite(output_dir + input_name + '_s=' + str(reward) + input_extension, cv2.imread(input_filename))
+            if overwrite and '_s=' in input_name:
+                input_name = input_name[:input_name.rfind('_s=')]
+            output_filename = output_dir + input_name + '_s=' + str(reward) + input_extension
+            cv2.imwrite(output_filename, cv2.imread(input_filename))
 
-        prev_reward = reward
-
+        print(output_filename)
+        utils.print_probs(labels_probs[index][0], template_values)
+        utils.print_probs(labels_probs[index][1], template_values)
+        utils.print_probs(labels_probs[index][2], template_values)
 
 def main():
     # Parse the command line arguments.
@@ -137,10 +154,10 @@ def main():
     input_images = utils.load_images(options.input_dir)
 
     # Classify each input image.
-    labels = classify_images(templates, input_images)
+    labels, labels_probs = classify_images(templates, input_images)
 
     # Save each input image with its reward.
-    save_input_images(templates, input_images, labels, options.output_dir)
+    save_input_images(templates, input_images, labels, labels_probs, options.output_dir, options.overwrite)
 
 
 if __name__ == '__main__':
