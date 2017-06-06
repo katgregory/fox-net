@@ -1,6 +1,7 @@
 import datetime
 import numpy as np
 import os
+import sys
 import tensorflow as tf
 
 from foxnet_model import FoxNetModel
@@ -60,6 +61,7 @@ def initialize_model(session, model):
 def record_params():
     dt = str(datetime.datetime.now())
     f = open(FLAGS.results_dir + "params" + "/" + dt + ".txt","w+")
+    f.write(" ".join(sys.argv) + "\n\n")
     for flag in FLAGS.__flags:
         f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
     f.close()
