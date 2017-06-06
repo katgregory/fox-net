@@ -262,7 +262,7 @@ class FoxNetModel(object):
                     scores.append(max_score_batch)
                     xlabels.append(total_batch_count)
                     make_q_plot("loss", xlabels, losses, results_dir, dt)
-                    make_q_plot("scores", xlabels, scores, results_dir, dt)
+                    make_q_plot("score", xlabels, scores, results_dir, dt)
 
                 batch_count += 1
                 total_batch_count += 1
