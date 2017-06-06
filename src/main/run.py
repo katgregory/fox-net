@@ -19,6 +19,7 @@ tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every 
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
 tf.app.flags.DEFINE_bool("plot", True, "")
+tf.app.flags.DEFINE_bool("verbose", False, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_bool("save_model", True, "")
@@ -99,7 +100,7 @@ def run_model():
     dt = record_params()
 
     # Initialize a data manager.
-    data_manager = DataManager()
+    data_manager = DataManager(FLAGS.verbose)
     if FLAGS.train_online:
         frames_per_state = 1
         if FLAGS.model == "dqn_3d":

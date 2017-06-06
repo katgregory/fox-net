@@ -9,8 +9,9 @@ import math
 
 
 class DataManager:
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.is_online = False
+        self.verbose = verbose
 
     def init_online(self, foxnet, session, batch_size, replay_buffer_size, frames_per_state, ip, image_height,
                     image_width, epsilon, user_overwrite=False):
@@ -123,10 +124,15 @@ class DataManager:
                 score_reward = self.reward_extractor.get_reward(full_image)
                 health_reward = self.health_extractor(full_image, offline=False)
 
+                if self.verbose:
+                    print('Online reward extracted: score=%d\thealth=%d' % (score_reward, health_reward))
+
                 if self.prev_health and self.prev_health > 0 and health_reward == 0:
                     # Agent just died.
-                    print('INFO: Agent just died. Setting health reward to -100')
+                    if self.verbose:
+                        print('INFO: Agent just died. Setting health reward to -100')
                     health_reward = -100
+
                 self.prev_health = health_reward
 
                 reward = score_reward + health_reward
