@@ -94,12 +94,7 @@ def save_input_images(templates, input_images, labels, output_dir=None):
     '''
     template_values = []
     for template_filename, _ in templates:
-        end_of_digit_index = template_filename.rfind('.')
-        if '_' in template_filename:
-            end_of_digit_index = template_filename.rfind('_')
-
-        template_name = template_filename[template_filename.rfind('/') + 1:end_of_digit_index]
-        template_values.append(int(template_name))
+        template_values.append(utils.digit_from_template_filename(template_filename))
 
     if output_dir and '/' not in output_dir:
         output_dir += '/'
@@ -118,9 +113,8 @@ def save_input_images(templates, input_images, labels, output_dir=None):
                      template_values[labels[index][1]] * 10 + \
                      template_values[labels[index][2]]
 
-            # Hack to correct for 9's being replaced with 0's in the hundreds digit.
-            if reward > 900:
-                reward -= 900
+            # Hack to correct for various digits incorrectly replaced with a 0 in the hundreds digit.
+            reward %= 100
 
         # Hack to correct for squished digits looking like 1's.
         if prev_reward > 0 and (prev_reward > reward or reward - prev_reward > 10):

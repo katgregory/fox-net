@@ -92,12 +92,7 @@ class RewardExtractor():
 
         template_values = []
         for template_filename, _ in templates:
-            end_of_digit_index = template_filename.rfind('.')
-            if '_' in template_filename:
-                end_of_digit_index = template_filename.rfind('_')
-
-            template_name = template_filename[template_filename.rfind('/') + 1:end_of_digit_index]
-            template_values.append(int(template_name))
+            template_values.append(utils.digit_from_template_filename(template_filename))
 
         if None in labels[0]:
             reward = 0
@@ -106,9 +101,8 @@ class RewardExtractor():
                      template_values[labels[0][1]] * 10 + \
                      template_values[labels[0][2]]
 
-            # Hack to correct for 9's being replaced with 0's in the hundreds digit.
-            if reward > 900:
-                reward -= 900
+            # Hack to correct for various digits incorrectly replaced with a 0 in the hundreds digit.
+            reward %= 100
 
         return reward
 
