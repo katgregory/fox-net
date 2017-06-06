@@ -12,7 +12,7 @@ from tqdm import *
 def load_datasets(tier, params):
     print("##### LOADING DATA ########################################")
     # Matching group 1 is frame number, matching group 2 is action
-    pattern = re.compile('i=(\d+)_a=(\w)_s=(\d+)_h=(\d+).png')
+    pattern = re.compile('i=(\d+)_a=(\w)(_s=(\d+)_h=(\d+))?.png')
 
     # Load images
     print("Loading images:")
@@ -34,8 +34,11 @@ def load_datasets(tier, params):
             match = re.search(pattern, filename)
             frame_number = match.group(1)
             action = match.group(2)
-            score = int(match.group(3))
-            health = int(match.group(4))
+            score = 0
+            health = 0
+            if match.group(3) is not None:
+                score = int(match.group(4))
+                health = int(match.group(5))
             
             # Convert image and add to collection
             # Shape of img is (480, 640, 3)
