@@ -75,6 +75,7 @@ class DataManager:
         a_batch = []
         r_batch = []
         a_eval_batch = []
+        max_score_batch = 0
 
         self.batch_iteration += 1
 
@@ -119,6 +120,7 @@ class DataManager:
                 score_reward = self.reward_extractor.get_reward(full_image)
                 health_reward = self.health_extractor(full_image, offline=False)
                 reward = score_reward + health_reward
+                max_score_batch = max(score_reward, max_score_batch)
 
                 # Store the <s,a,r,s'> transition.
                 # TODO Pass in True if terminal?
@@ -137,4 +139,5 @@ class DataManager:
             r_batch = self.r_train[idx]
             a_eval_batch = self.a_eval[idx]
 
-        return s_batch, a_batch, r_batch, a_eval_batch
+        print('Max score for current batch: %d' % max_score_batch)
+        return s_batch, a_batch, r_batch, a_eval_batch, max_score_batch

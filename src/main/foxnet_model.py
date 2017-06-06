@@ -119,7 +119,7 @@ class FoxNetModel(object):
             data_manager.init_epoch()
 
             while data_manager.has_next_batch():
-                s_batch, a_batch, _, a_eval_batch = data_manager.get_next_batch()
+                s_batch, a_batch, _, a_eval_batch, _ = data_manager.get_next_batch()
 
                 # Have tensorflow compute accuracy.
                 # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
@@ -240,7 +240,7 @@ class FoxNetModel(object):
 
             while data_manager.has_next_batch():
                 # Perform training step.
-                s_batch, a_batch, r_batch, _ = data_manager.get_next_batch()
+                s_batch, a_batch, r_batch, _, max_score_batch = data_manager.get_next_batch()
                 batch_reward = sum(r_batch)
                 actual_batch_size = data_manager.batch_size
 
