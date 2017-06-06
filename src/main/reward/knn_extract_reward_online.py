@@ -16,6 +16,7 @@ class RewardExtractor():
     def __init__(self):
         template_dir = './data/reward/templates/*'
         self.templates = self.load_template_images(template_dir)
+        self.prev_reward = 0
 
     def load_template_images(self, dir, filter_image_flag=True):
         '''
@@ -95,7 +96,7 @@ class RewardExtractor():
             template_values.append(utils.digit_from_template_filename(template_filename))
 
         if None in labels[0]:
-            reward = 0
+            reward = None
         else:
             reward = template_values[labels[0][0]] * 100 + \
                      template_values[labels[0][1]] * 10 + \
@@ -103,6 +104,12 @@ class RewardExtractor():
 
             # Hack to correct for various digits incorrectly replaced with a 0 in the hundreds digit.
             reward %= 100
+
+        # Hack to correct for squished digits looking like 1's.
+        if reward is None or \
+                (reward > 0 and self.prev_reward > 0 and abs(self.prev_reward - reward) > 6):
+            reward = self.prev_reward
+        self.prev_reward = reward
 
         return reward
 
@@ -114,6 +121,6 @@ class RewardExtractor():
         pearson_correlations = [pearsonr(input_digit, template_mat[:, index].flatten())[0] for index in
                                 range(template_mat.shape[1])]
         max_pearson_correlation = np.max(pearson_correlations)
-        if max_pearson_correlation < 0.5 or math.isnan(max_pearson_correlation):
+        if max_pearson_correlation < 0.9 or math.isnan(max_pearson_correlation):
             return None
         return np.argmax(pearson_correlations)
