@@ -3,7 +3,11 @@ This script extracts the score from each frame (displayed at the top left) and a
 specified, the original input images are renamed.
 
 Sample usage:
-/usr/bin/python2.7 /home/josh/grade_17/cs231n/fox-net/src/reward/knn_extract_reward.py \
+/usr/bin/python2.7 /home/josh/grade_17/cs231n/fox-net/src/main/reward/knn_extract_reward.py \
     --template_dir=/home/josh/grade_17/cs231n/fox-net/data/reward/templates/* \
     --input_dir=/home/josh/grade_17/cs231n/fox-net/data/data_score_health_test/data/* \
     --output_dir=/home/josh/grade_17/cs231n/fox-net/data/data_score_health_test_classified/
+
+/usr/bin/python2.7 /home/josh/grade_17/cs231n/fox-net/src/main/reward/knn_extract_reward.py \
+    --template_dir=/home/josh/grade_17/cs231n/fox-net/data/reward/templates/* \
+    --input_dir=/home/josh/grade_17/cs231n/fox-net/data/data_053017/5302017_1438/*
