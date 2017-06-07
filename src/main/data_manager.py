@@ -58,14 +58,17 @@ class DataManager:
 
         self.batch_size = batch_size
 
-    def init_epoch(self):
+    def init_epoch(self, for_eval=False):
         self.batch_iteration = -1
 
         if self.is_online:
             pass
         else:
-            self.train_indices = np.arange(self.s_train.shape[0])
-            np.random.shuffle(self.train_indices)
+            if for_eval: # "epoch" is entire validation set
+                self.epoch_indices = np.arange(self.s_eval.shape[0])
+            else:
+                self.epoch_indices = np.arange(self.s_train.shape[0])
+            np.random.shuffle(self.epoch_indices)
 
     def has_next_batch(self):
         if self.is_online:
@@ -74,7 +77,7 @@ class DataManager:
             num_batch_iterations = int(math.ceil(self.s_train.shape[0] / self.batch_size))
             return self.batch_iteration < num_batch_iterations
 
-    def get_next_batch(self):
+    def get_next_batch(self, for_eval=False):
         s_batch = []
         a_batch = []
         r_batch = []
@@ -150,13 +153,24 @@ class DataManager:
 
             s_batch, a_batch, r_batch, _, _ = self.replay_buffer.sample(self.batch_size)
         else:
-            # Generate indices for the batch.
-            start_idx = (self.batch_iteration * self.batch_size) % self.s_train.shape[0]
-            idx = self.train_indices[start_idx: start_idx + self.batch_size]
+            # Choose which data to batch
+            if (for_eval):
+                s_to_batch = self.s_eval
+                a_to_batch = self.a_eval
+                r_to_batch = None
+            else:
+                s_to_batch = self.s_train
+                a_to_batch = self.a_train
+                r_to_batch = self.r_train
 
-            s_batch = self.s_train[idx, :]
-            a_batch = self.a_train[idx]
-            r_batch = self.r_train[idx]
+            # Generate indices for the batch.
+            start_idx = (self.batch_iteration * self.batch_size) % s_to_batch.shape[0]
+            idx = self.epoch_indices[start_idx: start_idx + self.batch_size]
+
+            s_batch = s_to_batch[idx, :]
+            a_batch = a_to_batch[idx]
+            if (not for_eval):
+                r_batch = r_to_batch[idx]
 
         print('Max score for current batch: %d' % max_score_batch)
         return s_batch, a_batch, r_batch, max_score_batch
