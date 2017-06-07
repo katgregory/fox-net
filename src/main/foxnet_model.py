@@ -164,17 +164,11 @@ class FoxNetModel(object):
                   .format(total_loss, total_correct, e+1))
 
             if validate_incrementally:
-                validate_feed_dict = {
-                    self.X: data_manager.s_eval,
-                    self.y: data_manager.a_eval,
-                    self.is_training: False
-                }
-                loss, corr = session.run(validate_variables, feed_dict=validate_feed_dict)
-                validate_losses.append(loss)
-                validate_correct = np.sum(corr * 1.0 / data_manager.s_eval.shape[0])
-                validate_accuracies.append(validate_correct)
+                val_loss, val_accuracy = self.run_validation(data_manager, session, validate_variables, False)
+                validate_losses.append(val_loss)
+                validate_accuracies.append(val_accuracy)
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
-                  .format(loss, validate_correct, e+1))
+                  .format(val_loss, val_accuracy, e+1))
 
         # Write out summary stats
         print("##### TRAINING STATS ######################################")
@@ -198,9 +192,12 @@ class FoxNetModel(object):
 
     def run_validation(self,
                        data_manager,
-                       session):
-        correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.a_eval)
-        variables = [self.loss, correct_validation]
+                       session,
+                       variables=None,
+                       print_results=True):
+        if variables is None:
+            correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.a_eval)
+            variables = [self.loss, correct_validation]
 
         feed_dict = {
             self.X: data_manager.s_eval,
@@ -211,7 +208,10 @@ class FoxNetModel(object):
         loss, correct = session.run(variables, feed_dict=feed_dict)
         accuracy = np.sum(correct * 1.0 / data_manager.s_eval.shape[0])
 
-        print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(loss, accuracy))
+        if print_results:
+            print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(loss, accuracy))
+
+        return loss, accuracy
 
     def run_q_learning(self,
                        data_manager,
