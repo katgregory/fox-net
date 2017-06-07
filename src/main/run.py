@@ -14,7 +14,7 @@ from scipy.misc import imresize
 tf.app.flags.DEFINE_bool("dev", False, "")
 tf.app.flags.DEFINE_bool("test", False, "")
 tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn, dqn_3d")
-tf.app.flags.DEFINE_bool("validate", False, "Validate after all training is complete")
+tf.app.flags.DEFINE_bool("validate", True, "Validate after all training is complete")
 tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every epoch")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
@@ -159,7 +159,7 @@ def run_model():
         print('Saved model to dir: %s' % model_dir)
 
     # Validate the model
-    if (FLAGS.validate):
+    if (FLAGS.validate and not FLAGS.train_online):
         print("##### VALIDATING ##########################################")
         foxnet.run_validation(data_manager, session)
 
