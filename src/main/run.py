@@ -17,7 +17,7 @@ tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn, dqn_3d"
 tf.app.flags.DEFINE_bool("validate", True, "Validate after all training is complete")
 tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every epoch")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
-tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
+tf.app.flags.DEFINE_float("eval_proportion", 0.2, "") # TODO: Right now, breaks unless same size as train data
 tf.app.flags.DEFINE_bool("plot", True, "")
 tf.app.flags.DEFINE_bool("verbose", False, "")
 

@@ -78,7 +78,6 @@ class DataManager:
         s_batch = []
         a_batch = []
         r_batch = []
-        a_eval_batch = []
         max_score_batch = 0
 
         self.batch_iteration += 1
@@ -158,7 +157,6 @@ class DataManager:
             s_batch = self.s_train[idx, :]
             a_batch = self.a_train[idx]
             r_batch = self.r_train[idx]
-            a_eval_batch = self.a_eval[idx]
 
         print('Max score for current batch: %d' % max_score_batch)
-        return s_batch, a_batch, r_batch, a_eval_batch, max_score_batch
+        return s_batch, a_batch, r_batch, max_score_batch
