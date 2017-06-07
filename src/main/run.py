@@ -42,7 +42,7 @@ tf.app.flags.DEFINE_string("results_dir", "./results/", "")
 tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
-tf.app.flags.DEFINE_integer("batch_size", 20, "")
+tf.app.flags.DEFINE_integer("batch_size", 100, "")
 tf.app.flags.DEFINE_integer("replay_buffer_size", 1000, "")
 
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'n']
@@ -103,7 +103,7 @@ def run_model():
         if FLAGS.model == "dqn_3d":
             frames_per_state = FLAGS.frames_per_state
         data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, frames_per_state,
-                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.01, FLAGS.user_overwrite)
+                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.05, FLAGS.user_overwrite)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 

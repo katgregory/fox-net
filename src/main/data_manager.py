@@ -77,6 +77,7 @@ class DataManager:
         a_eval_batch = []
 
         self.batch_iteration += 1
+        frame_skip = 5
 
         if self.is_online:
 
@@ -85,8 +86,12 @@ class DataManager:
             # Play the game for base_size frames.
             # TODO Introduce a new parameter specifying how many frames to play each time we update parameters.
             i = 0
+            last_action = 6
             while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
-                i += 1
+                for j in np.arange(frame_skip):
+                    self.frame_reader.send_action(self.foxnet.available_actions[last_action])
+                    new_frame, full_image = self.frame_reader.read_frame()
+                i += 1  
                 # Store the most recent frame and get the past frames_per_state frames that define the current state.
                 replay_buffer_index = self.replay_buffer.store_frame(np.squeeze(frame))
                 state = self.replay_buffer.encode_recent_observation()
@@ -96,18 +101,18 @@ class DataManager:
                 feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
                 q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
 
-                action = 7
+                action = 6
 
                 if self.user_overwrite:
                     action = self.frame_reader.get_keys()
-
                 # If in user-overwrite and player does not input, do e-greedy
-                if action == 7:
+                if action == 6:
                     # e-greedy exploration.
                     if np.random.uniform() >= self.epsilon:
                         action = np.argmax(q_values_it)
                     else:
                         action = np.random.choice(np.arange(self.foxnet.num_actions))
+                last_action = action
 
                 # Send action to emulator.
                 self.frame_reader.send_action(self.foxnet.available_actions[action])

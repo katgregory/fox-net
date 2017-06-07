@@ -90,7 +90,7 @@ class FrameReader():
 		# Don't get movement if shoot
 		elif keys == 'j':
 			return self.actions.index(keys)
-		elif keys not in actions:
+		elif keys not in self.actions:
 			keys = 'n'
 
 		# Get movement as modifiers, as these register key holds
