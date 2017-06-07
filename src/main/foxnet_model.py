@@ -170,6 +170,11 @@ class FoxNetModel(object):
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(val_loss, val_accuracy, e+1))
 
+            # Update plot after every epoch (overwrites old version)
+            if plot:
+                make_classification_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
+                make_classification_plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
+
         # Write out summary stats
         print("##### TRAINING STATS ######################################")
         print("Final Loss: {0:.3g}\nFinal Accuracy: {1:.3g}".format(total_loss, total_correct))
@@ -182,11 +187,6 @@ class FoxNetModel(object):
             print(format_list(validate_losses))
             print("Validation Accuracies: ")
             print(format_list(validate_accuracies))
-
-        # Plot
-        if plot:
-            make_classification_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
-            make_classification_plot("accuracy", epoch_accuracies, validate_incrementally, validate_accuracies, results_dir, dt)
 
         return total_loss, total_correct
 
