@@ -1,6 +1,7 @@
 import datetime
 import numpy as np
 import os
+import sys
 import tensorflow as tf
 
 from foxnet_model import FoxNetModel
@@ -18,6 +19,7 @@ tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every 
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
 tf.app.flags.DEFINE_float("eval_proportion", 0.5, "") # TODO: Right now, breaks unless same size as train data
 tf.app.flags.DEFINE_bool("plot", True, "")
+tf.app.flags.DEFINE_bool("verbose", False, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_bool("save_model", True, "")
@@ -60,6 +62,7 @@ def initialize_model(session, model):
 def record_params():
     dt = str(datetime.datetime.now())
     f = open(FLAGS.results_dir + "params" + "/" + dt + ".txt","w+")
+    f.write(" ".join(sys.argv) + "\n\n")
     for flag in FLAGS.__flags:
         f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
     f.close()
@@ -97,7 +100,7 @@ def run_model():
     dt = record_params()
 
     # Initialize a data manager.
-    data_manager = DataManager()
+    data_manager = DataManager(FLAGS.verbose)
     if FLAGS.train_online:
         frames_per_state = 1
         if FLAGS.model == "dqn_3d":

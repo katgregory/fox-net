@@ -119,7 +119,7 @@ class FoxNetModel(object):
             data_manager.init_epoch()
 
             while data_manager.has_next_batch():
-                s_batch, a_batch, _, a_eval_batch = data_manager.get_next_batch()
+                s_batch, a_batch, _, a_eval_batch, _ = data_manager.get_next_batch()
 
                 # Have tensorflow compute accuracy.
                 # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
@@ -225,22 +225,18 @@ class FoxNetModel(object):
                        plot_every=20,
                        ):
 
-        epoch_losses = []
-        epoch_losses_xlabels = []
-        # if data_manager.is_online:
-        #     reward_filename = results_dir + "q_reward/" + dt + ".txt"
-        #     with open(reward_filename, 'a+') as f:
-        #         f.write("Q learning rewards (max of each epoch):\n")
+        losses = []
+        scores = []
+        xlabels = []
 
         total_batch_count = 0
         for e in range(epochs):
             data_manager.init_epoch()
-            losses = []
             batch_count = 0
 
             while data_manager.has_next_batch():
                 # Perform training step.
-                s_batch, a_batch, r_batch, _ = data_manager.get_next_batch()
+                s_batch, a_batch, r_batch, _, max_score_batch = data_manager.get_next_batch()
                 batch_reward = sum(r_batch)
                 actual_batch_size = data_manager.batch_size
 
@@ -252,9 +248,6 @@ class FoxNetModel(object):
                     self.is_training: training_now}
                 loss, _ = session.run(variables, feed_dict=feed_dict)
 
-                # Aggregate performance stats
-                losses.append(loss * actual_batch_size)
-
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
 
@@ -263,14 +256,13 @@ class FoxNetModel(object):
                     # Anneal epsilon
                     data_manager.epsilon *= 0.9
 
-                # Plot loss every "plot_every" batches
+                # Plot loss every "plot_every" batches (overwrites prev plot)
                 if plot and (total_batch_count % plot_every == 0):
-                    total_loss = np.sum(losses) / actual_batch_size
-                    epoch_losses.append(total_loss)
-                    epoch_losses_xlabels.append(total_batch_count)
-                    make_q_plot("loss", epoch_losses_xlabels, epoch_losses, results_dir, dt)
-                # with open(reward_filename, 'a') as f:
-                #     f.write(batch_counter + "," + max(r_batch) + "\n")
+                    losses.append(loss)
+                    scores.append(max_score_batch)
+                    xlabels.append(total_batch_count)
+                    make_q_plot("loss", xlabels, losses, results_dir, dt)
+                    make_q_plot("score", xlabels, scores, results_dir, dt)
 
                 batch_count += 1
                 total_batch_count += 1

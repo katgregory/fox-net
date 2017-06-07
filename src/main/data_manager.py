@@ -9,8 +9,9 @@ import math
 
 
 class DataManager:
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.is_online = False
+        self.verbose = verbose
 
     def init_online(self, foxnet, session, batch_size, replay_buffer_size, frames_per_state, ip, image_height,
                     image_width, epsilon, user_overwrite=False):
@@ -34,6 +35,9 @@ class DataManager:
         # Keep full image for reward extraction.
         frame, full_image = self.frame_reader.read_frame()
         self.frames = [frame]
+
+        # Remember the health from the previous frame.
+        self.prev_health = None
 
     def init_offline(self, use_test_set, data_params, batch_size):
         self.is_online = False
@@ -75,6 +79,7 @@ class DataManager:
         a_batch = []
         r_batch = []
         a_eval_batch = []
+        max_score_batch = 0
 
         self.batch_iteration += 1
         frame_skip = 5
@@ -123,7 +128,20 @@ class DataManager:
                 # Get the reward (score + health).
                 score_reward = self.reward_extractor.get_reward(full_image)
                 health_reward = self.health_extractor(full_image, offline=False)
+
+                if self.verbose:
+                    print('Online reward extracted: score=%d\thealth=%d' % (score_reward, health_reward))
+
+                if self.prev_health and self.prev_health > 0 and health_reward == 0:
+                    # Agent just died.
+                    if self.verbose:
+                        print('INFO: Agent just died. Setting health reward to -100')
+                    health_reward = -100
+
+                self.prev_health = health_reward
+
                 reward = score_reward + health_reward
+                max_score_batch = max(score_reward, max_score_batch)
 
                 # Store the <s,a,r,s'> transition.
                 # TODO Pass in True if terminal?
@@ -142,4 +160,5 @@ class DataManager:
             r_batch = self.r_train[idx]
             a_eval_batch = self.a_eval[idx]
 
-        return s_batch, a_batch, r_batch, a_eval_batch
+        print('Max score for current batch: %d' % max_score_batch)
+        return s_batch, a_batch, r_batch, a_eval_batch, max_score_batch
