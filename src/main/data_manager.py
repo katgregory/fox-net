@@ -70,11 +70,14 @@ class DataManager:
                 self.epoch_indices = np.arange(self.s_train.shape[0])
             np.random.shuffle(self.epoch_indices)
 
-    def has_next_batch(self):
+    def has_next_batch(self, for_eval=False):
         if self.is_online:
             return True
         else:
-            num_batch_iterations = int(math.ceil(self.s_train.shape[0] / self.batch_size))
+            if for_eval:
+                num_batch_iterations = int(math.ceil(self.s_eval.shape[0] / self.batch_size))
+            else:
+                num_batch_iterations = int(math.ceil(self.s_train.shape[0] / self.batch_size))
             return self.batch_iteration < num_batch_iterations
 
     def get_next_batch(self, for_eval=False):
@@ -172,5 +175,5 @@ class DataManager:
             if (not for_eval):
                 r_batch = r_to_batch[idx]
 
-        print('Max score for current batch: %d' % max_score_batch)
+        # print('Max score for current batch: %d' % max_score_batch)
         return s_batch, a_batch, r_batch, max_score_batch

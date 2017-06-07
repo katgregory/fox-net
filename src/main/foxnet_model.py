@@ -103,11 +103,6 @@ class FoxNetModel(object):
         epoch_accuracies = []
         total_loss, total_correct = None, None
 
-        if validate_incrementally:
-            correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.a_eval)
-            validate_variables = [self.loss, correct_validation]
-        else:
-            validate_variables = None
         validate_losses = []
         validate_accuracies = []
 
@@ -140,7 +135,7 @@ class FoxNetModel(object):
 
                 # Get actual batch size
                 # actual_batch_size = yd[idx].shape[0]
-                actual_batch_size = data_manager.batch_size
+                actual_batch_size = s_batch.shape[0]
 
                 # Have tensorflow compute loss and correct predictions
                 # and (if given) perform a training step
@@ -164,7 +159,7 @@ class FoxNetModel(object):
                   .format(total_loss, total_correct, e+1))
 
             if validate_incrementally:
-                val_loss, val_accuracy = self.run_validation(data_manager, session, validate_variables, False)
+                val_loss, val_accuracy = self.run_validation(data_manager, session, False)
                 validate_losses.append(val_loss)
                 validate_accuracies.append(val_accuracy)
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
@@ -193,25 +188,37 @@ class FoxNetModel(object):
     def run_validation(self,
                        data_manager,
                        session,
-                       variables=None,
                        print_results=True):
-        if variables is None:
-            correct_validation = tf.equal(tf.argmax(self.probs, 1), data_manager.a_eval)
+
+        total_correct = 0
+        losses = []
+
+        data_manager.init_epoch(for_eval=True)
+        while data_manager.has_next_batch(for_eval=True):
+            s_batch, a_batch, _, _ = data_manager.get_next_batch(for_eval=True)
+            batch_size = s_batch.shape[0]
+
+            correct_validation = tf.equal(tf.argmax(self.probs, 1), a_batch)
             variables = [self.loss, correct_validation]
 
-        feed_dict = {
-            self.X: data_manager.s_eval,
-            self.y: data_manager.a_eval,
-            self.is_training: False
-        }
+            feed_dict = {
+                self.X: s_batch,
+                self.y: a_batch,
+                self.is_training: False
+            }
 
-        loss, correct = session.run(variables, feed_dict=feed_dict)
-        accuracy = np.sum(correct * 1.0 / data_manager.s_eval.shape[0])
+            loss, correct = session.run(variables, feed_dict=feed_dict)
+
+            losses.append(loss * batch_size)
+            total_correct += np.sum(correct)
+
+        accuracy = total_correct * 1.0 / data_manager.s_eval.shape[0]
+        total_loss = np.sum(losses) / data_manager.s_eval.shape[0]
 
         if print_results:
-            print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(loss, accuracy))
+            print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(total_loss, accuracy))
 
-        return loss, accuracy
+        return total_loss, accuracy
 
     def run_q_learning(self,
                        data_manager,
