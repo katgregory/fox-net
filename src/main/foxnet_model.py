@@ -103,6 +103,7 @@ class FoxNetModel(object):
                            session,
                            epochs,
                            model_path,
+                           save_model,
                            training_now=False,
                            validate_incrementally=False,
                            print_every=100,
@@ -176,8 +177,9 @@ class FoxNetModel(object):
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(val_loss, val_accuracy, e+1))
 
-            print("-- saving model --")
-            self.saver.save(session, model_path)
+            if save_model:
+                print("-- saving model --")
+                self.saver.save(session, model_path)
 
             # Update plot after every epoch (overwrites old version)
             if plot:
@@ -239,6 +241,7 @@ class FoxNetModel(object):
                        session,
                        epochs,
                        model_path,
+                       save_model,
                        results_dir,
                        training_now=False,
                        dt="",
@@ -272,7 +275,7 @@ class FoxNetModel(object):
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
 
-                if total_batch_count % 100 == 0:
+                if save_model and total_batch_count % 100 == 0:
                     print("-- saving model --")
                     self.saver.save(session, model_path)
                     # Anneal epsilon

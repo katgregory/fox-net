@@ -137,13 +137,14 @@ def run_model():
         print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, results_dir=FLAGS.results_dir,
+            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, save_model=FLAGS.save_model, results_dir=FLAGS.results_dir,
                                   plot=FLAGS.plot, dt=dt)
         else:
             foxnet.run_classification(data_manager,
                                       session,
                                       epochs=FLAGS.num_epochs,
                                       model_path=model_path,
+                                      save_model=FLAGS.save_model,
                                       training_now=True,
                                       validate_incrementally=FLAGS.validate_incrementally,
                                       print_every=1,
