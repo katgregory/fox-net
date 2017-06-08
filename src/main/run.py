@@ -36,7 +36,7 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 1, "")
 tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
-tf.app.flags.DEFINE_float("reg_lambda", .001, "Regularization")
+tf.app.flags.DEFINE_float("reg_lambda", .01, "Regularization")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 
 # INFRASTRUCTURE
