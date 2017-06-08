@@ -91,6 +91,7 @@ foxnet = FoxNetModel(
                 model='simple_cnn',
                 q_learning='False',
                 lr=0.000004,
+                reg_lambda=-1,
                 height=48,
                 width=64,
                 n_channels=3,

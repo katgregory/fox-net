@@ -24,6 +24,7 @@ class FoxNetModel(object):
                 model,
                 q_learning,
                 lr,
+                reg_lambda,
                 height,
                 width,
                 n_channels,
@@ -35,6 +36,7 @@ class FoxNetModel(object):
                 verbose = False):
 
         self.lr = lr
+        self.reg_lambda = reg_lambda
         self.verbose = verbose
         self.available_actions = available_actions
         self.available_actions_names = available_actions_names
@@ -81,6 +83,12 @@ class FoxNetModel(object):
             onehot_labels = tf.one_hot(self.y, self.num_actions)
             total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.probs)
             self.loss = tf.reduce_mean(total_loss)
+
+        # Regularization for all but biases
+        if reg_lambda >= 0:
+            variables   = tf.trainable_variables()
+            reg_loss = tf.add_n([ tf.nn.l2_loss(v) for v in variables if 'bias' not in v.name ]) * reg_lambda
+            self.loss += reg_loss
 
         # Define optimizer
         optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
