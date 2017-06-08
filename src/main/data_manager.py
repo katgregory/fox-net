@@ -150,8 +150,8 @@ class DataManager:
                 last_frame_was_a_menu = score_is_not_digits
                 health_reward = self.health_extractor(full_image, offline=False)
 
-                if self.verbose:
-                    print('Online reward extracted: score=%d\thealth=%d' % (score_reward, health_reward))
+                if self.verbose and not last_frame_was_a_menu:
+                    print('Online reward extracted: score=%d\thealth=%f' % (score_reward, health_reward))
 
                 # Check if we just died.
                 if self.prev_health and self.prev_health > 0 and health_reward == 0:

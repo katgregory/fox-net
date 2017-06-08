@@ -34,7 +34,7 @@ def classify_digit_pearson(input_digit, template_mat):
     max_pearson_correlation = np.max(pearson_correlations)
 
     digit = None
-    if max_pearson_correlation < 0.5 or math.isnan(max_pearson_correlation):
+    if max_pearson_correlation < 0.4 or math.isnan(max_pearson_correlation):
         digit = NOT_A_DIGIT
     elif max_pearson_correlation < 0.9:
         digit = UNCERTAIN_DIGIT
