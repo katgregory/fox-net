@@ -86,6 +86,7 @@ def run_model():
                 FLAGS.num_channels,
                 FLAGS.frames_per_state,
                 ACTIONS,
+                ACTION_NAMES,
                 FLAGS.cnn_filter_size,
                 FLAGS.cnn_num_filters
             )

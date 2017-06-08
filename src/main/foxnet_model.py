@@ -29,6 +29,7 @@ class FoxNetModel(object):
                 n_channels,
                 frames_per_state,
                 available_actions,
+                available_actions_names,
                 cnn_filter_size,
                 cnn_n_filters,
                 verbose = False):
@@ -36,6 +37,7 @@ class FoxNetModel(object):
         self.lr = lr
         self.verbose = verbose
         self.available_actions = available_actions
+        self.available_actions_names = available_actions_names
         self.num_actions = len(self.available_actions)
 
         # Placeholders

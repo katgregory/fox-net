@@ -1,21 +1,52 @@
 import cv2
 import glob
 import re
+import math
+import numpy as np
+from scipy.stats.stats import pearsonr
 
+# Pixel coordinates of score.
 Y_MIN = 65
 Y_SIZE = 31
 X_MIN = 47
 X_SIZE = 26
 
+# Average digit pixel color values.
 R_MEAN = 88
 G_MEAN = 152
 B_MEAN = 75
 RGB_TOL = 15
 
 
+# Classification labels.
+UNCERTAIN_DIGIT = -1
+NOT_A_DIGIT = -2
+
+
+def classify_digit_inner_product(input_digit, template_mat):
+    return np.argmax(np.dot(input_digit, template_mat)), np.dot(input_digit, template_mat)
+
+
+def classify_digit_pearson(input_digit, template_mat):
+    pearson_correlations = [pearsonr(input_digit, template_mat[:, index].flatten())[0] for index in
+                            range(template_mat.shape[1])]
+
+    max_pearson_correlation = np.max(pearson_correlations)
+
+    digit = None
+    if max_pearson_correlation < 0.5 or math.isnan(max_pearson_correlation):
+        digit = NOT_A_DIGIT
+    elif max_pearson_correlation < 0.9:
+        digit = UNCERTAIN_DIGIT
+    else:
+        digit = np.argmax(pearson_correlations)
+
+    return digit, pearson_correlations
+
+
 def print_probs(probs, template_values):
-    if probs is None:
-        print('')
+    if probs is None or np.isnan(probs).any():
+        print('Invalid pearson correlations.')
     else:
         print('\t%s' % [int(x * 100) / 100.0 for (y, x) in sorted(zip(template_values, probs))])
 

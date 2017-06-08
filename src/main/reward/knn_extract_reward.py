@@ -1,10 +1,8 @@
 import cv2
 import glob
 import os
-import math
 import numpy as np
 import utils
-from scipy.stats.stats import pearsonr
 from optparse import OptionParser
 
 
@@ -71,26 +69,13 @@ def classify_images(templates, input_images):
     labels = []
     labels_probs = []
     for _, hundreds, tens, ones in input_images:
-        h, hp = classify_digit_pearson(hundreds, template_mat)
-        t, tp = classify_digit_pearson(tens, template_mat)
-        o, op = classify_digit_pearson(ones, template_mat)
+        h, hp = utils.classify_digit_pearson(hundreds, template_mat)
+        t, tp = utils.classify_digit_pearson(tens, template_mat)
+        o, op = utils.classify_digit_pearson(ones, template_mat)
         labels.append((h, t, o))
         labels_probs.append((hp, tp, op))
 
     return labels, labels_probs
-
-
-def classify_digit_inner_product(input_digit, template_mat):
-    return np.argmax(np.dot(input_digit, template_mat)), np.dot(input_digit, template_mat)
-
-
-def classify_digit_pearson(input_digit, template_mat):
-    pearson_correlations = [pearsonr(input_digit, template_mat[:, index].flatten())[0] for index in
-                            range(template_mat.shape[1])]
-    max_pearson_correlation = np.max(pearson_correlations)
-    if max_pearson_correlation < 0.9 or math.isnan(max_pearson_correlation):
-        return None, None
-    return np.argmax(pearson_correlations), pearson_correlations
 
 
 def save_input_images(templates, input_images, labels, labels_probs=None, output_dir=None, overwrite=False):
@@ -106,15 +91,17 @@ def save_input_images(templates, input_images, labels, labels_probs=None, output
     if output_dir and '/' not in output_dir:
         output_dir += '/'
 
-    rewards = [0]
+    prev_reward = 0
 
     for index, (input_filename, _, _, _) in enumerate(input_images):
         input_base = input_filename[:input_filename.rfind('.')]
         input_extension = input_filename[input_filename.rfind('.'):]
         input_name = input_base[input_base.rfind('/') + 1:]
 
-        if None in labels[index]:
-            reward = None
+        if utils.UNCERTAIN_DIGIT in labels[index]:
+            reward = utils.UNCERTAIN_DIGIT
+        elif utils.NOT_A_DIGIT in labels[index]:
+            reward = utils.NOT_A_DIGIT
         else:
             reward = template_values[labels[index][0]] * 100 + \
                      template_values[labels[index][1]] * 10 + \
@@ -124,20 +111,22 @@ def save_input_images(templates, input_images, labels, labels_probs=None, output
             reward %= 150
 
         # Hack to correct for squished digits looking like 1's.
-        if reward is None or \
-                (reward > 0 and rewards[-1] > 0 and abs(rewards[-1] - reward) > 6): #(prev_reward > reward or reward - prev_reward > 2):
-            reward = rewards[-1]
-        rewards.append(reward)
+        if reward is utils.UNCERTAIN_DIGIT or \
+                (reward > 0 and prev_reward > 0 and abs(prev_reward - reward) > 6):
+            reward = prev_reward
+        prev_reward = reward
+
+        reward_value = max(reward, 0)
 
         if output_dir is None:
             if overwrite and '_s=' in input_base:
                 input_base = input_base[:input_base.rfind('_s=')]
-            output_filename = input_base + '_s=' + str(reward) + input_extension
+            output_filename = input_base + '_s=' + str(reward_value) + input_extension
             os.rename(input_filename, output_filename)
         else:
             if overwrite and '_s=' in input_name:
                 input_name = input_name[:input_name.rfind('_s=')]
-            output_filename = output_dir + input_name + '_s=' + str(reward) + input_extension
+            output_filename = output_dir + input_name + '_s=' + str(reward_value) + input_extension
             cv2.imwrite(output_filename, cv2.imread(input_filename))
 
         print(output_filename)

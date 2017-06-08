@@ -10,4 +10,5 @@ Sample usage:
 
 /usr/bin/python2.7 /home/josh/grade_17/cs231n/fox-net/src/main/reward/knn_extract_reward.py \
     --template_dir=/home/josh/grade_17/cs231n/fox-net/data/reward/templates/* \
-    --input_dir=/home/josh/grade_17/cs231n/fox-net/data/data_053017/5302017_1438/*
+    --input_dir=/home/josh/grade_17/cs231n/fox-net/data/data_053017/test/*
+    --output_dir=/home/josh/grade_17/cs231n/fox-net/data/data_053017/test_classified

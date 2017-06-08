@@ -89,7 +89,7 @@ class FrameReader():
 			keys = 'n'
 		# Don't get movement if shoot
 		elif keys == 'j':
-			return self.actions.index(keys)
+			return keys
 		elif keys not in self.actions:
 			keys = 'n'
 
@@ -98,4 +98,4 @@ class FrameReader():
 			if modifiers[mod] == True:
 				keys = self.modifier_mappings[mod]
 
-		return self.actions.index(keys)
+		return keys

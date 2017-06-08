@@ -16,6 +16,11 @@ class RewardExtractor():
     def __init__(self):
         template_dir = './data/reward/templates/*'
         self.templates = self.load_template_images(template_dir)
+
+        self.template_values = []
+        for template_filename, _ in self.templates:
+            self.template_values.append(utils.digit_from_template_filename(template_filename))
+
         self.prev_reward = 0
 
     def load_template_images(self, dir, filter_image_flag=True):
@@ -77,50 +82,35 @@ class RewardExtractor():
 
         # Classify each image.
         labels = []
-        hundreds = input_image[0]
-        tens = input_image[1]
-        ones = input_image[2]
 
-        labels.append((self.classify_digit_pearson(hundreds, template_mat),
-                           self.classify_digit_pearson(tens, template_mat),
-                           self.classify_digit_pearson(ones, template_mat)))
+        hundreds_digit, _ = utils.classify_digit_pearson(input_image[0], template_mat)
+        tens_digit, _ = utils.classify_digit_pearson(input_image[1], template_mat)
+        ones_digit, _ = utils.classify_digit_pearson(input_image[2], template_mat)
+        labels.append((hundreds_digit, tens_digit, ones_digit))
 
         return labels
 
     def get_reward(self, input_image):
-        templates = self.templates
         labels = self.classify_image(input_image)
 
-        template_values = []
-        for template_filename, _ in templates:
-            template_values.append(utils.digit_from_template_filename(template_filename))
-
-        if None in labels[0]:
-            reward = None
+        if utils.UNCERTAIN_DIGIT in labels[0]:
+            reward = utils.UNCERTAIN_DIGIT
+        elif utils.NOT_A_DIGIT in labels[0]:
+            reward = utils.NOT_A_DIGIT
         else:
-            reward = template_values[labels[0][0]] * 100 + \
-                     template_values[labels[0][1]] * 10 + \
-                     template_values[labels[0][2]]
+            reward = self.template_values[labels[0][0]] * 100 + \
+                     self.template_values[labels[0][1]] * 10 + \
+                     self.template_values[labels[0][2]]
 
             # Hack to correct for various digits incorrectly replaced with a 0 in the hundreds digit.
             reward %= 100
 
         # Hack to correct for squished digits looking like 1's.
-        if reward is None or \
+        if reward is utils.UNCERTAIN_DIGIT or \
                 (reward > 0 and self.prev_reward > 0 and abs(self.prev_reward - reward) > 6):
             reward = self.prev_reward
         self.prev_reward = reward
 
-        return reward
+        reward_value = max(reward, 0)
 
-    def classify_digit_inner_product(self, input_digit, template_mat):
-        return np.argmax(np.dot(input_digit, template_mat))
-
-
-    def classify_digit_pearson(self, input_digit, template_mat):
-        pearson_correlations = [pearsonr(input_digit, template_mat[:, index].flatten())[0] for index in
-                                range(template_mat.shape[1])]
-        max_pearson_correlation = np.max(pearson_correlations)
-        if max_pearson_correlation < 0.9 or math.isnan(max_pearson_correlation):
-            return None
-        return np.argmax(pearson_correlations)
+        return reward_value, reward == utils.NOT_A_DIGIT

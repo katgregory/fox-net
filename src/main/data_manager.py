@@ -3,7 +3,6 @@ from health.health import HealthExtractor
 from reward.knn_extract_reward_online import RewardExtractor
 from data import load_datasets
 from replay_buffer import ReplayBuffer
-
 import numpy as np
 import math
 
@@ -96,10 +95,11 @@ class DataManager:
             # Play the game for base_size frames.
             # TODO Introduce a new parameter specifying how many frames to play each time we update parameters.
             i = 0
-            last_action = 6
+            last_action_str = 'n'
+            last_frame_had_invalid_score = False
             while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
                 for j in np.arange(frame_skip):
-                    self.frame_reader.send_action(self.foxnet.available_actions[last_action])
+                    self.frame_reader.send_action(last_action_str)
                     new_frame, full_image = self.frame_reader.read_frame()
                 i += 1  
                 # Store the most recent frame and get the past frames_per_state frames that define the current state.
@@ -108,30 +108,46 @@ class DataManager:
                 state = np.expand_dims(state, 0)
 
                 # Get the best action to take in the current state.
-                feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
-                q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
+                if last_frame_had_invalid_score:
+                    # We are not actually playing a level.
+                    action_str = np.random.choice(['l', 'j'])
+                    print('PRESSING SELECT (we\'re not playing a level, right?). Taking action: %s' % action_str)
+                else:
+                    feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
+                    q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
 
-                action = 6
+                    action_str = 'n'
 
-                if self.user_overwrite:
-                    action = self.frame_reader.get_keys()
-                # If in user-overwrite and player does not input, do e-greedy
-                if action == 6:
-                    # e-greedy exploration.
-                    if np.random.uniform() >= self.epsilon:
-                        action = np.argmax(q_values_it)
-                    else:
-                        action = np.random.choice(np.arange(self.foxnet.num_actions))
-                last_action = action
+                    if self.user_overwrite:
+                        action_str = self.frame_reader.get_keys()
+
+                    # If in user-overwrite and player does not input, do e-greedy
+                    if action_str == 'n':
+                        # e-greedy exploration.
+                        if np.random.uniform() >= self.epsilon:
+                            action_str = self.foxnet.available_actions[np.argmax(q_values_it)]
+                        else:
+                            action_str = np.random.choice(self.foxnet.available_actions)
 
                 # Send action to emulator.
-                self.frame_reader.send_action(self.foxnet.available_actions[action])
+                self.frame_reader.send_action(action_str)
+
+                # Remember this action for the next iteration.
+                last_action_str = action_str
+
+                # Determine the action we will send to the replay buffer.
+                if last_frame_had_invalid_score:
+                    # If the last frame was a non-level frame, pretend we just did a noop.
+                    replay_buffer_str = self.foxnet.available_actions.index('n')
+                else:
+                    replay_buffer_str = self.foxnet.available_actions.index(action_str)
 
                 # Get the next frame.
                 new_frame, full_image = self.frame_reader.read_frame()
 
                 # Get the reward (score + health).
-                score_reward = self.reward_extractor.get_reward(full_image)
+                score_reward, score_is_not_digits = self.reward_extractor.get_reward(full_image)
+                last_frame_had_invalid_score = score_is_not_digits
                 health_reward = self.health_extractor(full_image, offline=False)
 
                 if self.verbose:
@@ -142,15 +158,13 @@ class DataManager:
                     if self.verbose:
                         print('INFO: Agent just died. Setting health reward to -100')
                     health_reward = -100
-
                 self.prev_health = health_reward
 
                 reward = score_reward + health_reward
                 max_score_batch = max(score_reward, max_score_batch)
 
                 # Store the <s,a,r,s'> transition.
-                # TODO Pass in True if terminal?
-                self.replay_buffer.store_effect(replay_buffer_index, action, reward, False)
+                self.replay_buffer.store_effect(replay_buffer_index, replay_buffer_str, reward, False)
 
                 frame = new_frame
 
