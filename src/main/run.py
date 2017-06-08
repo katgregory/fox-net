@@ -141,6 +141,7 @@ def run_model():
             foxnet.run_classification(data_manager,
                                       session,
                                       epochs=FLAGS.num_epochs,
+                                      model_path=model_path,
                                       training_now=True,
                                       validate_incrementally=FLAGS.validate_incrementally,
                                       print_every=1,

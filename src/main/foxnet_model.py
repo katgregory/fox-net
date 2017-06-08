@@ -93,7 +93,8 @@ class FoxNetModel(object):
     def run_classification(self,
                            data_manager,
                            session,
-                           epochs=1,
+                           epochs,
+                           model_path,
                            training_now=False,
                            validate_incrementally=False,
                            print_every=100,
@@ -166,6 +167,9 @@ class FoxNetModel(object):
                 validate_accuracies.append(val_accuracy)
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(val_loss, val_accuracy, e+1))
+
+            print("-- saving model --")
+            self.saver.save(session, model_path)
 
             # Update plot after every epoch (overwrites old version)
             if plot:
@@ -260,7 +264,8 @@ class FoxNetModel(object):
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
 
-                if batch_count % 100 == 0:
+                if total_batch_count % 100 == 0:
+                    print("-- saving model --")
                     self.saver.save(session, model_path)
                     # Anneal epsilon
                     data_manager.epsilon *= 0.9
@@ -285,7 +290,7 @@ def make_classification_plot(plot_name, train, validate_incrementally, validate,
         validate_line = plt.plot(validate, label="Validation " + plot_name)
     plt.legend()
     plt.grid(True)
-    plt.title(plot_name)
+    plt.title("classification " + plot_name)
     plt.xlabel('epoch number')
     plt.ylabel('epoch ' + plot_name)
     plt.savefig(results_dir + "classification_" + plot_name + "/" + plot_name + "_" + dt + ".png")
