@@ -89,14 +89,12 @@ class DataManager:
         frame_skip = 5
 
         if self.is_online:
-
             frame = self.frames[-1]
 
             # Play the game for base_size frames.
-            # TODO Introduce a new parameter specifying how many frames to play each time we update parameters.
             i = 0
             last_action_str = 'n'
-            last_frame_had_invalid_score = False
+            last_frame_was_a_menu = False
             while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
                 for j in np.arange(frame_skip):
                     self.frame_reader.send_action(last_action_str)
@@ -108,10 +106,12 @@ class DataManager:
                 state = np.expand_dims(state, 0)
 
                 # Get the best action to take in the current state.
-                if last_frame_had_invalid_score:
-                    # We are not actually playing a level.
+                if last_frame_was_a_menu:
+                    # We are not actually playing a level, so press 'l' or 'j' to get through the current menu/video.
                     action_str = np.random.choice(['l', 'j'])
-                    print('PRESSING SELECT (we\'re not playing a level, right?). Taking action: %s' % action_str)
+                    if self.verbose:
+                        print('PRESSING SELECT/SKIPPING INTRO VIDEO (we\'re not playing a level, right?). '
+                              'Taking action: %s' % action_str)
                 else:
                     feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
                     q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
@@ -136,8 +136,8 @@ class DataManager:
                 last_action_str = action_str
 
                 # Determine the action we will send to the replay buffer.
-                if last_frame_had_invalid_score:
-                    # If the last frame was a non-level frame, pretend we just did a noop.
+                if last_frame_was_a_menu:
+                    # If the last frame was a menu/video, pretend we just did a noop.
                     replay_buffer_str = self.foxnet.available_actions.index('n')
                 else:
                     replay_buffer_str = self.foxnet.available_actions.index(action_str)
@@ -147,16 +147,17 @@ class DataManager:
 
                 # Get the reward (score + health).
                 score_reward, score_is_not_digits = self.reward_extractor.get_reward(full_image)
-                last_frame_had_invalid_score = score_is_not_digits
+                last_frame_was_a_menu = score_is_not_digits
                 health_reward = self.health_extractor(full_image, offline=False)
 
                 if self.verbose:
                     print('Online reward extracted: score=%d\thealth=%d' % (score_reward, health_reward))
 
+                # Check if we just died.
                 if self.prev_health and self.prev_health > 0 and health_reward == 0:
                     # Agent just died.
                     if self.verbose:
-                        print('INFO: Agent just died. Setting health reward to -100')
+                        print('Agent just died. Setting health reward to -100')
                     health_reward = -100
                 self.prev_health = health_reward
 
@@ -165,7 +166,6 @@ class DataManager:
 
                 # Store the <s,a,r,s'> transition.
                 self.replay_buffer.store_effect(replay_buffer_index, replay_buffer_str, reward, False)
-
                 frame = new_frame
 
             s_batch, a_batch, r_batch, _, _ = self.replay_buffer.sample(self.batch_size)
