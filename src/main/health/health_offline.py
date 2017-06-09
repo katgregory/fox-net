@@ -39,7 +39,7 @@ if __name__ == '__main__':
         output_dir += '/'
 
     # Create health extractor
-    heo = HealthExtractor('./healthbar.png')
+    heo = HealthExtractor('./healthbar.png', './red_frame.png')
 
     image_filenames = load_images(options.input_dir, heo)
     for index, input_filename in enumerate(image_filenames):
