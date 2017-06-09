@@ -80,9 +80,14 @@ class FoxNetModel(object):
             self.q_values = self.probs
             self.actions = ph(tf.uint8, [None], name='action')
 
-            Q_samp = self.rewards + gamma * tf.reduce_max(self.q_values, axis=1)
-            action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
-            self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
+            if self.use_target_net:
+                self.target_q_values = foxnet.DQN(self.Xp, self.yp, self.num_actions, scope="target_q")
+                self.add_q_learning_update_target_op("q", "target_q")
+                self.add_q_learning_loss_op(self.q_values, self.target_q_values)
+            else:
+                Q_samp = self.rewards + gamma * tf.reduce_max(self.q_values, axis=1)
+                action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
+                self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
 
         # Otherwise, set up loss for classification.
         else:
@@ -93,13 +98,29 @@ class FoxNetModel(object):
 
         # Regularization for all but biases
         if reg_lambda >= 0:
-            variables   = tf.trainable_variables()
+            variables = tf.trainable_variables()
             reg_loss = tf.add_n([ tf.nn.l2_loss(v) for v in variables if 'bias' not in v.name ]) * reg_lambda
             self.loss += reg_loss
 
         # Define optimizer
+        # TODO(target network) This step is different!
         optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
         self.train_step = optimizer.minimize(self.loss)
+
+
+    def add_q_learning_update_target_op(self, q_scope, target_q_scope):
+        source_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=q_scope)
+        target_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=target_q_scope)
+        assign_list = [tf.assign(target_vars[i], source_vars[i]) for i in range(len(target_vars))]
+        self.update_target_op = tf.group(*assign_list)
+
+    def add_q_learning_loss_op(self, q, target_q, num_actions):
+        q_target_max_a = tf.reduce_max(target_q, axis=1)
+        q_samp = self.r + self.config.gamma * (1.0 - tf.to_float(self.done_mask)) * q_target_max_a
+        self.loss = tf.reduce_sum(tf.square(q_samp - tf.reduce_sum(q * tf.one_hot(self.a, num_actions), axis=1)))
+
+    def update_target_params(self):
+        self.sess.run(self.update_target_op)
 
     #############################
     # RUN GRAPH
