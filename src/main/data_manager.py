@@ -44,6 +44,7 @@ class DataManager:
     def init_offline(self, use_test_set, data_params, batch_size):
         self.is_online = False
         self.user_overwrite = False
+        self.epsilon = 0 # Not used.
 
         # Load the two pertinent datasets into train_dataset and eval_dataset
         if use_test_set:
