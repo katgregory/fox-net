@@ -1,6 +1,7 @@
 from emu_interact import FrameReader
 from health.health import HealthExtractor
 from reward.knn_extract_reward_online import RewardExtractor
+from menu.menu_navigator import MenuNavigator
 from data import load_datasets
 from replay_buffer import ReplayBuffer
 import numpy as np
@@ -30,10 +31,12 @@ class DataManager:
         self.frame_reader = FrameReader(ip, image_height, image_width)
         self.health_extractor = HealthExtractor()
         self.reward_extractor = RewardExtractor()
+        self.menu_navigator = MenuNavigator()
 
         # Keep full image for reward extraction.
         frame, full_image = self.frame_reader.read_frame()
-        self.frames = [frame]
+        self.prev_frame = frame
+        self.prev_full_image = full_image
 
         # Remember the health from the previous frame.
         self.prev_health = None
@@ -41,6 +44,7 @@ class DataManager:
     def init_offline(self, use_test_set, data_params, batch_size):
         self.is_online = False
         self.user_overwrite = False
+        self.epsilon = 0 # Not used.
 
         # Load the two pertinent datasets into train_dataset and eval_dataset
         if use_test_set:
@@ -89,17 +93,29 @@ class DataManager:
         frame_skip = 5
 
         if self.is_online:
-            frame = self.frames[-1]
+            frame = self.prev_frame
+            full_image = self.prev_full_image
 
             # Play the game for base_size frames.
             i = 0
             last_action_str = 'n'
             last_frame_was_a_menu = False
             while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
+                i += 1
                 for j in np.arange(frame_skip):
                     self.frame_reader.send_action(last_action_str)
-                    new_frame, full_image = self.frame_reader.read_frame()
-                i += 1  
+                    frame, full_image = self.frame_reader.read_frame()
+
+                # As soon as the frame is the main menu, select the first option.
+                while self.menu_navigator.is_image_menu(full_image):
+                    # Alternate actions between l and j because j selects the option, but holding j does nothing.
+                    action_str = np.random.choice(['l', 'j'])
+                    if self.verbose:
+                        print('MENU DETECTED: Pressing l or j.'
+                              'Taking action: %s' % action_str)
+                    self.frame_reader.send_action(action_str)
+                    frame, full_image = self.frame_reader.read_frame()
+
                 # Store the most recent frame and get the past frames_per_state frames that define the current state.
                 replay_buffer_index = self.replay_buffer.store_frame(np.squeeze(frame))
                 state = self.replay_buffer.encode_recent_observation()
@@ -110,7 +126,7 @@ class DataManager:
                     # We are not actually playing a level, so press 'l' or 'j' to get through the current menu/video.
                     action_str = np.random.choice(['l', 'j'])
                     if self.verbose:
-                        print('PRESSING SELECT/SKIPPING INTRO VIDEO (we\'re not playing a level, right?). '
+                        print('NO SCORE DETECTED: Pressing l or j. '
                               'Taking action: %s' % action_str)
                 else:
                     feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
@@ -157,8 +173,8 @@ class DataManager:
                 if self.prev_health and self.prev_health > 0 and health_reward == 0:
                     # Agent just died.
                     if self.verbose:
-                        print('Agent just died. Setting health reward to -100')
-                    health_reward = -100
+                        print('Agent just died. Setting health reward to -10.')
+                    health_reward = -10
                 self.prev_health = health_reward
 
                 reward = score_reward + health_reward
@@ -167,6 +183,9 @@ class DataManager:
                 # Store the <s,a,r,s'> transition.
                 self.replay_buffer.store_effect(replay_buffer_index, replay_buffer_str, reward, False)
                 frame = new_frame
+
+            self.prev_frame = frame
+            self.prev_full_image = full_image
 
             s_batch, a_batch, r_batch, _, _ = self.replay_buffer.sample(self.batch_size)
         else:

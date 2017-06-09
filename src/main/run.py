@@ -17,7 +17,7 @@ tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn, dqn_3d"
 tf.app.flags.DEFINE_bool("validate", True, "Validate after all training is complete")
 tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every epoch")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
-tf.app.flags.DEFINE_float("eval_proportion", 0.2, "") # TODO: Right now, breaks unless same size as train data
+tf.app.flags.DEFINE_float("eval_proportion", 0.2, "")
 tf.app.flags.DEFINE_bool("plot", True, "")
 tf.app.flags.DEFINE_bool("verbose", False, "")
 
@@ -36,9 +36,14 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 1, "")
 tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
+tf.app.flags.DEFINE_float("dropout", .5, "For simple_cnn only; 0.1 would drop out 10 percent of input units")
 tf.app.flags.DEFINE_float("reg_lambda", .01, "Regularization")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
+
+tf.app.flags.DEFINE_bool("use_target_net", False, "")
+tf.app.flags.DEFINE_float("tau", 0.001, "Soft target update factor.")
+tf.app.flags.DEFINE_integer("target_q_update_step", 10, "")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "./data/data_053017/", "data directory (default ./data)")
@@ -84,6 +89,10 @@ def run_model():
                 FLAGS.qlearning,
                 FLAGS.lr,
                 FLAGS.reg_lambda,
+                FLAGS.dropout,
+                FLAGS.use_target_net,
+                FLAGS.tau,
+                FLAGS.target_q_update_step,
                 FLAGS.image_height,
                 FLAGS.image_width,
                 FLAGS.num_channels,
@@ -165,7 +174,7 @@ def run_model():
         print('Saved model to dir: %s' % model_dir)
 
     # Validate the model
-    if (FLAGS.validate and not FLAGS.train_online):
+    if (FLAGS.validate and not FLAGS.train_online and not FLAGS.qlearning):
         print("##### VALIDATING ##########################################")
         foxnet.run_validation(data_manager, session)
 

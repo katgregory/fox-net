@@ -25,6 +25,10 @@ class FoxNetModel(object):
                 q_learning,
                 lr,
                 reg_lambda,
+                dropout,
+                use_target_net,
+                tau, 
+                target_q_update_step,
                 height,
                 width,
                 n_channels,
@@ -37,10 +41,14 @@ class FoxNetModel(object):
 
         self.lr = lr
         self.reg_lambda = reg_lambda
+        self.use_target_net = use_target_net
+        self.tau = tau
+        self.target_q_update_step = target_q_update_step
         self.verbose = verbose
         self.available_actions = available_actions
         self.available_actions_names = available_actions_names
         self.num_actions = len(self.available_actions)
+        self.q_learning = q_learning
 
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
@@ -58,9 +66,9 @@ class FoxNetModel(object):
         if model == "fc":
             self.probs = foxnet.fully_connected(self.X, self.y, self.num_actions)
         elif model == "simple_cnn":
-            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, self.is_training)
+            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, dropout, self.num_actions, self.is_training)
         elif model == "dqn":
-            self.probs = foxnet.DQN(self.X, self.y, self.num_actions)
+            self.probs = foxnet.DQN(self.X, self.y, self.num_actions, scope="q")
         elif model == "dqn_3d":
             self.probs = foxnet.DQN_3D(self.X, self.y, self.num_actions, frames_per_state)
         else:
@@ -73,9 +81,14 @@ class FoxNetModel(object):
             self.q_values = self.probs
             self.actions = ph(tf.uint8, [None], name='action')
 
-            Q_samp = self.rewards + gamma * tf.reduce_max(self.q_values, axis=1)
-            action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
-            self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
+            if self.use_target_net:
+                self.target_q_values = foxnet.DQN(self.Xp, self.yp, self.num_actions, scope="target_q")
+                self.add_q_learning_update_target_op("q", "target_q")
+                self.add_q_learning_loss_op(self.q_values, self.target_q_values)
+            else:
+                Q_samp = self.rewards + gamma * tf.reduce_max(self.q_values, axis=1)
+                action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
+                self.loss = tf.reduce_sum(tf.square((Q_samp-tf.reduce_sum(self.q_values*action_mask, axis=1))))
 
         # Otherwise, set up loss for classification.
         else:
@@ -86,13 +99,29 @@ class FoxNetModel(object):
 
         # Regularization for all but biases
         if reg_lambda >= 0:
-            variables   = tf.trainable_variables()
+            variables = tf.trainable_variables()
             reg_loss = tf.add_n([ tf.nn.l2_loss(v) for v in variables if 'bias' not in v.name ]) * reg_lambda
             self.loss += reg_loss
 
         # Define optimizer
+        # TODO(target network) This step is different!
         optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
         self.train_step = optimizer.minimize(self.loss)
+
+
+    def add_q_learning_update_target_op(self, q_scope, target_q_scope):
+        source_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=q_scope)
+        target_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=target_q_scope)
+        assign_list = [tf.assign(target_vars[i], source_vars[i]) for i in range(len(target_vars))]
+        self.update_target_op = tf.group(*assign_list)
+
+    def add_q_learning_loss_op(self, q, target_q, num_actions):
+        q_target_max_a = tf.reduce_max(target_q, axis=1)
+        q_samp = self.r + self.config.gamma * (1.0 - tf.to_float(self.done_mask)) * q_target_max_a
+        self.loss = tf.reduce_sum(tf.square(q_samp - tf.reduce_sum(q * tf.one_hot(self.a, num_actions), axis=1)))
+
+    def update_target_params(self):
+        self.sess.run(self.update_target_op)
 
     #############################
     # RUN GRAPH
@@ -211,17 +240,25 @@ class FoxNetModel(object):
 
         data_manager.init_epoch(for_eval=True)
         while data_manager.has_next_batch(for_eval=True):
-            s_batch, a_batch, _, _ = data_manager.get_next_batch(for_eval=True)
+            s_batch, a_batch, r_batch, _ = data_manager.get_next_batch(for_eval=True)
             batch_size = s_batch.shape[0]
 
             correct_validation = tf.equal(tf.argmax(self.probs, 1), a_batch)
             variables = [self.loss, correct_validation]
 
-            feed_dict = {
-                self.X: s_batch,
-                self.y: a_batch,
-                self.is_training: False
-            }
+            if self.q_learning:
+                feed_dict = {
+                    self.X: s_batch,
+                    self.rewards: r_batch,
+                    self.actions: a_batch,
+                    self.is_training: False
+                }
+            else:
+                feed_dict = {
+                    self.X: s_batch,
+                    self.y: a_batch,
+                    self.is_training: False
+                }
 
             loss, correct = session.run(variables, feed_dict=feed_dict)
 
