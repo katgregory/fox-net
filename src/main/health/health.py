@@ -28,7 +28,7 @@ class HealthExtractor():
 	def compare_health(self):
 		absdiff = np.abs(np.linalg.norm(self.maxhealth-self.curhealth, axis=2))
 		health_sum = np.sum(absdiff <= self.thresh)
-		health_ratio = health_sum/self.totalpixels
+		health_ratio = float(health_sum)/self.totalpixels
 
 		health_ratio = np.round(health_ratio, 3)
 		# Hack to prevent background from registering on non-health screens
