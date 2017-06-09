@@ -85,9 +85,6 @@ class DataManager:
             return self.batch_iteration < num_batch_iterations
 
     def get_next_batch(self, for_eval=False):
-        init = tf.global_variables_initializer()
-        self.session.run(init)
-
         s_batch = []
         a_batch = []
         r_batch = []

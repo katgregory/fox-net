@@ -27,7 +27,7 @@ class FoxNet(object):
                 reg_lambda,
                 use_target_net,
                 tau,
-                target_q_update_step,
+                target_q_update_freq,
                 height,
                 width,
                 n_channels,
@@ -42,7 +42,7 @@ class FoxNet(object):
         self.reg_lambda = reg_lambda
         self.use_target_net = use_target_net
         self.tau = tau
-        self.target_q_update_step = target_q_update_step
+        self.target_q_update_freq = target_q_update_freq
         self.verbose = verbose
         self.available_actions = available_actions
         self.available_actions_names = available_actions_names
@@ -83,13 +83,10 @@ class FoxNet(object):
             if self.use_target_net:
                 self.q_values_p = self.model.get_q_values_op(self.states_p, scope='target_q')
                 self.add_q_learning_update_target_op('q', 'target_q')
-                self.add_q_learning_loss_op(self.q_values, self.q_values_p, self.num_actions)
             else:
                 self.q_values_p = self.model.get_q_values_op(self.states_p)
-                target = self.rewards + self.gamma * tf.reduce_max(self.q_values_p, axis=1)
-                action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
-                prediction = tf.reduce_sum(self.q_values*action_mask, axis=1)
-                self.loss = tf.reduce_sum(tf.square((target - prediction)))
+
+            self.add_q_learning_loss_op(self.q_values, self.q_values_p, self.num_actions)
 
         # Otherwise, set up loss for classification.
         else:
@@ -106,9 +103,9 @@ class FoxNet(object):
             self.loss += reg_loss
 
         # Define optimizer
-        # TODO(target network) This step is different!
         optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
-        self.train_step = optimizer.minimize(self.loss)
+        vars_to_minimize = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='q')
+        self.train_step = optimizer.minimize(self.loss, var_list=vars_to_minimize)
 
     def add_q_learning_update_target_op(self, q_scope, target_q_scope):
         source_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=q_scope)
@@ -117,10 +114,10 @@ class FoxNet(object):
         self.update_target_op = tf.group(*assign_list)
 
     def add_q_learning_loss_op(self, q, target_q, num_actions):
-        # TODO This function might not yet fully implemented.
-        q_target_max_a = tf.reduce_max(target_q, axis=1)
-        q_samp = self.rewards + self.gamma * q_target_max_a
-        self.loss = tf.reduce_sum(tf.square(q_samp - tf.reduce_sum(q * tf.one_hot(self.a, num_actions), axis=1)))
+        target = self.rewards + self.gamma * tf.reduce_max(self.q_values_p, axis=1)
+        action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
+        prediction = tf.reduce_sum(self.q_values*action_mask, axis=1)
+        self.loss = tf.reduce_sum(tf.square((target - prediction)))
 
     def update_target_params(self, session):
         session.run(self.update_target_op)
@@ -290,13 +287,12 @@ class FoxNet(object):
                        plot=False,
                        plot_every=1,
                        ):
-        init = tf.global_variables_initializer()
-        session.run(init)
-        print('Initialized all global variables')
-
         losses = []
         scores = []
         xlabels = []
+
+        # Update the target params on initialization.
+        self.update_target_params(session)
 
         total_batch_count = 0
         for e in range(epochs):
@@ -319,6 +315,9 @@ class FoxNet(object):
 
                 print('Loss: %f' % loss)
                 print('Batch reward: %f' % batch_reward)
+
+                if total_batch_count % self.target_q_update_freq:
+                    self.update_target_params(session)
 
                 if save_model and total_batch_count % 100 == 0:
                     print('Saving model.')
