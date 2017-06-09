@@ -92,6 +92,7 @@ foxnet = FoxNetModel(
                 q_learning='False',
                 lr=0.000004,
                 reg_lambda=-1,
+                dropout=0.5
                 use_target_net=False,
                 tau=.99,
                 target_q_update_step=10,

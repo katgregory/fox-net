@@ -17,7 +17,7 @@ tf.app.flags.DEFINE_string("model", "fc", "Options: fc, simple_cnn, dqn, dqn_3d"
 tf.app.flags.DEFINE_bool("validate", True, "Validate after all training is complete")
 tf.app.flags.DEFINE_bool("validate_incrementally", False, "Validate after every epoch")
 tf.app.flags.DEFINE_integer("num_images", 1000, "")
-tf.app.flags.DEFINE_float("eval_proportion", 0.2, "") # TODO: Right now, breaks unless same size as train data
+tf.app.flags.DEFINE_float("eval_proportion", 0.2, "")
 tf.app.flags.DEFINE_bool("plot", True, "")
 tf.app.flags.DEFINE_bool("verbose", False, "")
 
@@ -36,6 +36,7 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 1, "")
 tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
+tf.app.flags.DEFINE_float("dropout", .5, "For simple_cnn only; 0.1 would drop out 10 percent of input units")
 tf.app.flags.DEFINE_float("reg_lambda", .01, "Regularization")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
@@ -88,6 +89,7 @@ def run_model():
                 FLAGS.qlearning,
                 FLAGS.lr,
                 FLAGS.reg_lambda,
+                FLAGS.dropout,
                 FLAGS.use_target_net,
                 FLAGS.tau,
                 FLAGS.target_q_update_step,

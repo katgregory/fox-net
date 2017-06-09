@@ -25,6 +25,7 @@ class FoxNetModel(object):
                 q_learning,
                 lr,
                 reg_lambda,
+                dropout,
                 use_target_net,
                 tau, 
                 target_q_update_step,
@@ -65,7 +66,7 @@ class FoxNetModel(object):
         if model == "fc":
             self.probs = foxnet.fully_connected(self.X, self.y, self.num_actions)
         elif model == "simple_cnn":
-            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, self.is_training)
+            self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, dropout, self.num_actions, self.is_training)
         elif model == "dqn":
             self.probs = foxnet.DQN(self.X, self.y, self.num_actions, scope="q")
         elif model == "dqn_3d":

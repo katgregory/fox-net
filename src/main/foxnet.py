@@ -17,7 +17,7 @@ class FoxNet(object):
         y_out = tf.layers.dense(inputs=affine_relu, units=n_labels)
         return y_out
 
-    def simple_cnn(self, X, y, filter_size, n_filters, n_labels, is_training):
+    def simple_cnn(self, X, y, filter_size, n_filters, dropout_rate, n_labels, is_training):
         # Input Layer [batch_size, image_width, image_height, channels]
         input_layer = X
 
@@ -68,7 +68,7 @@ class FoxNet(object):
         affine_relu = tf.layers.dense(inputs=flattened, units=1024, activation=tf.nn.relu)
 
         # Dropout
-        dropout = tf.layers.dropout(inputs=affine_relu, rate=0.5, training=is_training)
+        dropout = tf.layers.dropout(inputs=affine_relu, rate=dropout_rate, training=is_training)
 
         # Logits Layer
         y_out = tf.layers.dense(inputs=dropout, units=n_labels)
