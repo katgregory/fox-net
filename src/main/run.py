@@ -4,7 +4,7 @@ import os
 import sys
 import tensorflow as tf
 
-from foxnet_model import FoxNetModel
+from foxnet import FoxNet
 from emu_interact import FrameReader
 from data_manager import DataManager
 from scipy.misc import imresize
@@ -83,7 +83,7 @@ def run_model():
     session = tf.Session()
 
     # Initialize a FoxNet model.
-    foxnet = FoxNetModel(
+    foxnet = FoxNet(
                 FLAGS.model,
                 FLAGS.qlearning,
                 FLAGS.lr,
@@ -102,8 +102,8 @@ def run_model():
             )
 
     foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
-    model_dir = './models/%s' % (FLAGS.model_dir)
-    model_name = '%s' % (FLAGS.model_dir)
+    model_dir = './models/%s' % FLAGS.model_dir
+    model_name = '%s' % FLAGS.model_dir
     model_path = model_dir + '/' + model_name
 
     initialize_model(session, foxnet)

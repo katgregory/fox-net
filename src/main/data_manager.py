@@ -6,6 +6,7 @@ from data import load_datasets
 from replay_buffer import ReplayBuffer
 import numpy as np
 import math
+import tensorflow as tf
 
 
 class DataManager:
@@ -84,9 +85,13 @@ class DataManager:
             return self.batch_iteration < num_batch_iterations
 
     def get_next_batch(self, for_eval=False):
+        init = tf.global_variables_initializer()
+        self.session.run(init)
+
         s_batch = []
         a_batch = []
         r_batch = []
+        s_p_batch = []
         max_score_batch = 0
 
         self.batch_iteration += 1
@@ -129,8 +134,9 @@ class DataManager:
                         print('NO SCORE DETECTED: Pressing l or j. '
                               'Taking action: %s' % action_str)
                 else:
-                    feed_dict = {self.foxnet.X: state, self.foxnet.is_training: False}
-                    q_values_it = self.session.run(self.foxnet.probs, feed_dict=feed_dict)
+                    feed_dict = {self.foxnet.states: state, self.foxnet.is_training: False}
+                    q_values = self.session.run(self.foxnet.q_values,
+                                                feed_dict=feed_dict)
 
                     action_str = 'n'
 
@@ -141,7 +147,7 @@ class DataManager:
                     if action_str == 'n':
                         # e-greedy exploration.
                         if np.random.uniform() >= self.epsilon:
-                            action_str = self.foxnet.available_actions[np.argmax(q_values_it)]
+                            action_str = self.foxnet.available_actions[np.argmax(q_values)]
                         else:
                             action_str = np.random.choice(self.foxnet.available_actions)
 
@@ -187,10 +193,10 @@ class DataManager:
             self.prev_frame = frame
             self.prev_full_image = full_image
 
-            s_batch, a_batch, r_batch, _, _ = self.replay_buffer.sample(self.batch_size)
+            s_batch, a_batch, r_batch, s_p_batch, _ = self.replay_buffer.sample(self.batch_size)
         else:
             # Choose which data to batch
-            if (for_eval):
+            if for_eval:
                 s_to_batch = self.s_eval
                 a_to_batch = self.a_eval
                 r_to_batch = None
@@ -205,8 +211,10 @@ class DataManager:
 
             s_batch = s_to_batch[idx, :]
             a_batch = a_to_batch[idx]
-            if (not for_eval):
+            if not for_eval:
                 r_batch = r_to_batch[idx]
 
+            raise Exception('Need to implement s_p_batch for offline learning, I think. -Josh')
+
         # print('Max score for current batch: %d' % max_score_batch)
-        return s_batch, a_batch, r_batch, max_score_batch
+        return s_batch, a_batch, r_batch, s_p_batch, max_score_batch

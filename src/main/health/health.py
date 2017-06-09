@@ -41,7 +41,7 @@ class HealthExtractor():
 
         health_ratio = np.round(health_ratio, 3)
         # Hack to prevent background from registering on non-health screens
-        if health_ratio <= 0.05:
+        if health_ratio <= 0.01:
             health_ratio = 0.0
 
         health_ratio = int(10*health_ratio)
