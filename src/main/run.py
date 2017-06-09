@@ -40,6 +40,10 @@ tf.app.flags.DEFINE_float("reg_lambda", .01, "Regularization")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
 
+tf.app.flags.DEFINE_bool("use_target_net", False, "")
+tf.app.flags.DEFINE_float("tau", 0.001, "Soft target update factor.")
+tf.app.flags.DEFINE_integer("target_q_update_step", 10, "")
+
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "./data/data_053017/", "data directory (default ./data)")
 tf.app.flags.DEFINE_string("results_dir", "./results/", "")
@@ -84,6 +88,9 @@ def run_model():
                 FLAGS.qlearning,
                 FLAGS.lr,
                 FLAGS.reg_lambda,
+                FLAGS.use_target_net,
+                FLAGS.tau,
+                FLAGS.target_q_update_step,
                 FLAGS.image_height,
                 FLAGS.image_width,
                 FLAGS.num_channels,

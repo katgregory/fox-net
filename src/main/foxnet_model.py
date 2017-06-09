@@ -25,6 +25,9 @@ class FoxNetModel(object):
                 q_learning,
                 lr,
                 reg_lambda,
+                use_target_net,
+                tau, 
+                target_q_update_step,
                 height,
                 width,
                 n_channels,
@@ -37,6 +40,9 @@ class FoxNetModel(object):
 
         self.lr = lr
         self.reg_lambda = reg_lambda
+        self.use_target_net = use_target_net
+        self.tau = tau
+        self.target_q_update_step = target_q_update_step
         self.verbose = verbose
         self.available_actions = available_actions
         self.available_actions_names = available_actions_names
