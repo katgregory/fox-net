@@ -74,89 +74,90 @@ class FoxNet(object):
         y_out = tf.layers.dense(inputs=dropout, units=n_labels)
         return y_out
 
-    def DQN(self, X, y, n_labels):
+    def DQN(self, X, y, n_labels, scope, reuse=False):
         input_layer = X
 
-        conv1 = tf.layers.conv2d(
-            inputs = input_layer,
-            filters = 32,
-            kernel_size = 8,
-            padding = "same",
-            activation = tf.nn.relu
-        )
+        with tf.variable_scope(scope):
+            conv1 = tf.layers.conv2d(
+                inputs = input_layer,
+                filters = 32,
+                kernel_size = 8,
+                padding = "same",
+                activation = tf.nn.relu
+            )
 
-        conv2 = tf.layers.conv2d(
-            inputs = conv1,
-            filters = 64,
-            kernel_size = 4,
-            padding = "same",
-            activation = tf.nn.relu
-        )
+            conv2 = tf.layers.conv2d(
+                inputs = conv1,
+                filters = 64,
+                kernel_size = 4,
+                padding = "same",
+                activation = tf.nn.relu
+            )
 
-        conv3 = tf.layers.conv2d(
-            inputs = conv2,
-            filters = 32, # To match DQN3D (and not crash the GPU)
-            kernel_size = 3,
-            padding = "same",
-            activation = tf.nn.relu
-        )
+            conv3 = tf.layers.conv2d(
+                inputs = conv2,
+                filters = 32, # To match DQN3D (and not crash the GPU)
+                kernel_size = 3,
+                padding = "same",
+                activation = tf.nn.relu
+            )
 
-        magic_number = 98304
-        conv3_flat = tf.reshape(conv3, [-1, magic_number])
+            magic_number = 98304
+            conv3_flat = tf.reshape(conv3, [-1, magic_number])
 
-        affine_relu = tf.layers.dense(
-            inputs = conv3_flat,
-            units = 512,
-            activation = tf.nn.relu
-        )
+            affine_relu = tf.layers.dense(
+                inputs = conv3_flat,
+                units = 512,
+                activation = tf.nn.relu
+            )
 
-        y_out = tf.layers.dense(
-            inputs = affine_relu,
-            units = n_labels
-        )
+            y_out = tf.layers.dense(
+                inputs = affine_relu,
+                units = n_labels
+            )
 
-        return y_out
+            return y_out
 
-    def DQN_3D(self, X, y, n_labels, frames_per_state):
-        input_layer = X
-        
-        conv1 = tf.layers.conv3d(
-            inputs=input_layer,
-            filters=32,
-            kernel_size=8,
-            padding="same",
-            activation=tf.nn.relu
-        )
+        def DQN_3D(self, X, y, n_labels, frames_per_state):
+            input_layer = X
 
-        conv2 = tf.layers.conv3d(
-            inputs=conv1,
-            filters=64,
-            kernel_size=4,
-            padding="same",
-            activation=tf.nn.relu
-        )
+            conv1 = tf.layers.conv3d(
+                inputs=input_layer,
+                filters=32,
+                kernel_size=8,
+                padding="same",
+                activation=tf.nn.relu
+            )
 
-        conv3 = tf.layers.conv3d(
-            inputs=conv2,
-            filters=32,
-            kernel_size=3,
-            padding="same",
-            activation=tf.nn.relu
-        )
+            conv2 = tf.layers.conv3d(
+                inputs=conv1,
+                filters=64,
+                kernel_size=4,
+                padding="same",
+                activation=tf.nn.relu
+            )
 
-        # Flatten: (?, 3, 48, 64, 32) to (?, 589824)
-        magic_number = frames_per_state * 98304
-        conv3_flat = tf.reshape(conv3, [-1, magic_number])
+            conv3 = tf.layers.conv3d(
+                inputs=conv2,
+                filters=32,
+                kernel_size=3,
+                padding="same",
+                activation=tf.nn.relu
+            )
 
-        affine_relu = tf.layers.dense(
-            inputs = conv3_flat,
-            units = 512,
-            activation = tf.nn.relu
-        )
+            # Flatten: (?, 3, 48, 64, 32) to (?, 589824)
+            magic_number = frames_per_state * 98304
+            conv3_flat = tf.reshape(conv3, [-1, magic_number])
 
-        y_out = tf.layers.dense(
-            inputs = affine_relu,
-            units = n_labels
-        )
+            affine_relu = tf.layers.dense(
+                inputs = conv3_flat,
+                units = 512,
+                activation = tf.nn.relu
+            )
+
+            y_out = tf.layers.dense(
+                inputs = affine_relu,
+                units = n_labels
+            )
 
         return y_out

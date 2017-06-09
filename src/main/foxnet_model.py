@@ -61,7 +61,7 @@ class FoxNetModel(object):
         elif model == "simple_cnn":
             self.probs = foxnet.simple_cnn(self.X, self.y, cnn_filter_size, cnn_n_filters, self.num_actions, self.is_training)
         elif model == "dqn":
-            self.probs = foxnet.DQN(self.X, self.y, self.num_actions)
+            self.probs = foxnet.DQN(self.X, self.y, self.num_actions, scope="q")
         elif model == "dqn_3d":
             self.probs = foxnet.DQN_3D(self.X, self.y, self.num_actions, frames_per_state)
         else:
