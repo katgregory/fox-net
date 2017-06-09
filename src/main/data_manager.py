@@ -157,8 +157,8 @@ class DataManager:
                 if self.prev_health and self.prev_health > 0 and health_reward == 0:
                     # Agent just died.
                     if self.verbose:
-                        print('Agent just died. Setting health reward to -100')
-                    health_reward = -100
+                        print('Agent just died. Setting health reward to -10')
+                    health_reward = -10
                 self.prev_health = health_reward
 
                 reward = score_reward + health_reward
