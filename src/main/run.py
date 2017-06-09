@@ -36,6 +36,7 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 # HYPERPARAMETERS
 tf.app.flags.DEFINE_integer("frames_per_state", 1, "")
 tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
+tf.app.flags.DEFINE_float("reg_lambda", .01, "Regularization")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
 
@@ -82,6 +83,7 @@ def run_model():
                 FLAGS.model,
                 FLAGS.qlearning,
                 FLAGS.lr,
+                FLAGS.reg_lambda,
                 FLAGS.image_height,
                 FLAGS.image_width,
                 FLAGS.num_channels,
@@ -136,12 +138,14 @@ def run_model():
         print("##### TRAINING ############################################")
         # Run Q-learning or classification.
         if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, results_dir=FLAGS.results_dir,
+            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, save_model=FLAGS.save_model, results_dir=FLAGS.results_dir,
                                   plot=FLAGS.plot, dt=dt)
         else:
             foxnet.run_classification(data_manager,
                                       session,
                                       epochs=FLAGS.num_epochs,
+                                      model_path=model_path,
+                                      save_model=FLAGS.save_model,
                                       training_now=True,
                                       validate_incrementally=FLAGS.validate_incrementally,
                                       print_every=1,

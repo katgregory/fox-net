@@ -10,6 +10,7 @@ from foxnet_model import FoxNetModel
 
 model_dir = './models/trained_cnn/'
 model_name = 'sample_model'
+results_dir = './results/saliency/'
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
 ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
 
@@ -57,33 +58,26 @@ def compute_saliency_maps(X, y, model):
     return saliency
 
 # show_saliency_maps(X, y, 5)
-def show_saliency_maps(model, X, y, count):
-    mask = np.asarray(np.arange(count))
-    Xm = X[mask]
-    ym = y[mask]
+def show_saliency_maps(model, X, y, count=5, num_trials=5):
+    for trial in xrange(num_trials):
+        mask = np.random.randint(0, X.shape[0], count)
+        Xm = X[mask]
+        ym = y[mask]
 
-    saliency = compute_saliency_maps(Xm, ym, model)
+        saliency = compute_saliency_maps(Xm, ym, model)
 
-    for i in range(mask.size):
-        plt.subplot(2, mask.size, i + 1)
-        plt.imshow(Xm[i])
-        plt.axis('off')
-        plt.title(ACTION_NAMES[ym[i]])
-        plt.subplot(2, mask.size, mask.size + i + 1)
-        plt.title(mask[i])
-        plt.imshow(saliency[i], cmap=plt.cm.hot)
-        plt.axis('off')
-        plt.gcf().set_size_inches(10, 4)
-    plt.show()
-
-# def deprocess_image(img, rescale=False):
-#     """Undo preprocessing on an image and convert back to uint8."""
-#     img = (img * SQUEEZENET_STD + SQUEEZENET_MEAN)
-#     if rescale:
-#         vmin, vmax = img.min(), img.max()
-#         img = (img - vmin) / (vmax - vmin)
-#     return np.clip(255 * img, 0.0, 255.0).astype(np.uint8)
-
+        for i in range(mask.size):
+            plt.subplot(2, mask.size, i + 1)
+            plt.imshow(Xm[i])
+            plt.axis('off')
+            plt.title(ACTION_NAMES[ym[i]])
+            plt.subplot(2, mask.size, mask.size + i + 1)
+            plt.title(mask[i])
+            plt.imshow(saliency[i], cmap=plt.cm.hot)
+            plt.axis('off')
+            plt.gcf().set_size_inches(10, 4)
+        plt.savefig(results_dir + "saliency" + str(trial) + ".png")
+        plt.close()
 
 # Load model
 print("##### LOADING MODEL #######################################")
@@ -94,16 +88,18 @@ saver = tf.train.import_meta_graph(model_dir + model_name + '.meta')
 saver.restore(sess, tf.train.latest_checkpoint(model_dir))
 
 foxnet = FoxNetModel(
-                'simple_cnn',
-                'False',
-                0.000004,
-                48,
-                64,
-                3,
-                1,
-                ACTIONS,
-                7,
-                32
+                model='simple_cnn',
+                q_learning='False',
+                lr=0.000004,
+                reg_lambda=-1,
+                height=48,
+                width=64,
+                n_channels=3,
+                frames_per_state=1,
+                available_actions=ACTIONS,
+                available_actions_names=ACTION_NAMES,
+                cnn_filter_size=7,
+                cnn_n_filters=32
             )
 
 sess.run(tf.global_variables_initializer())
@@ -133,10 +129,4 @@ s, a, scores, h = all_data
 
 print("##### SALIENCY MAPS #######################################")
 # Generate 5 options
-show_saliency_maps(foxnet, s, a, 5)
-show_saliency_maps(foxnet, s, a, 5)
-show_saliency_maps(foxnet, s, a, 5)
-show_saliency_maps(foxnet, s, a, 5)
-show_saliency_maps(foxnet, s, a, 5)
-
-
+show_saliency_maps(foxnet, s, a)

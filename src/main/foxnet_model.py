@@ -24,6 +24,7 @@ class FoxNetModel(object):
                 model,
                 q_learning,
                 lr,
+                reg_lambda,
                 height,
                 width,
                 n_channels,
@@ -35,6 +36,7 @@ class FoxNetModel(object):
                 verbose = False):
 
         self.lr = lr
+        self.reg_lambda = reg_lambda
         self.verbose = verbose
         self.available_actions = available_actions
         self.available_actions_names = available_actions_names
@@ -82,6 +84,12 @@ class FoxNetModel(object):
             total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.probs)
             self.loss = tf.reduce_mean(total_loss)
 
+        # Regularization for all but biases
+        if reg_lambda >= 0:
+            variables   = tf.trainable_variables()
+            reg_loss = tf.add_n([ tf.nn.l2_loss(v) for v in variables if 'bias' not in v.name ]) * reg_lambda
+            self.loss += reg_loss
+
         # Define optimizer
         optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
         self.train_step = optimizer.minimize(self.loss)
@@ -93,7 +101,9 @@ class FoxNetModel(object):
     def run_classification(self,
                            data_manager,
                            session,
-                           epochs=1,
+                           epochs,
+                           model_path,
+                           save_model,
                            training_now=False,
                            validate_incrementally=False,
                            print_every=100,
@@ -167,6 +177,10 @@ class FoxNetModel(object):
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(val_loss, val_accuracy, e+1))
 
+            if save_model:
+                print("-- saving model --")
+                self.saver.save(session, model_path)
+
             # Update plot after every epoch (overwrites old version)
             if plot:
                 make_classification_plot("loss", epoch_losses, validate_incrementally, validate_losses, results_dir, dt)
@@ -227,6 +241,7 @@ class FoxNetModel(object):
                        session,
                        epochs,
                        model_path,
+                       save_model,
                        results_dir,
                        training_now=False,
                        dt="",
@@ -260,7 +275,8 @@ class FoxNetModel(object):
                 print("loss: ", loss)
                 print("batch reward: ", batch_reward)
 
-                if batch_count % 100 == 0:
+                if save_model and total_batch_count % 100 == 0:
+                    print("-- saving model --")
                     self.saver.save(session, model_path)
                     # Anneal epsilon
                     data_manager.epsilon *= 0.9
@@ -287,7 +303,7 @@ def make_classification_plot(plot_name, train, validate_incrementally, validate,
         validate_line = plt.plot(validate, label="Validation " + plot_name)
     plt.legend()
     plt.grid(True)
-    plt.title(plot_name)
+    plt.title("Classification " + plot_name)
     plt.xlabel('Epoch number')
     plt.ylabel('Epoch ' + plot_name)
     plt.savefig(results_dir + "classification_" + plot_name + "/" + plot_name + "_" + dt + ".png")
