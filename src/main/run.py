@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_bool("verbose", False, "")
 
 tf.app.flags.DEFINE_bool("load_model", False, "")
 tf.app.flags.DEFINE_bool("save_model", True, "")
-tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files")
+tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files.")
 tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
@@ -37,6 +37,7 @@ tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
 tf.app.flags.DEFINE_integer("frames_per_state", 1, "")
 tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
+tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "./data/data_053017/", "data directory (default ./data)")
@@ -44,7 +45,7 @@ tf.app.flags.DEFINE_string("results_dir", "./results/", "")
 tf.app.flags.DEFINE_integer("image_width", 64, "")
 tf.app.flags.DEFINE_integer("image_height", 48, "")
 tf.app.flags.DEFINE_integer("num_channels", 3, "")
-tf.app.flags.DEFINE_integer("batch_size", 100, "")
+tf.app.flags.DEFINE_integer("batch_size", 10, "")
 tf.app.flags.DEFINE_integer("replay_buffer_size", 1000, "")
 
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'n']
@@ -107,7 +108,7 @@ def run_model():
         if FLAGS.model == "dqn_3d":
             frames_per_state = FLAGS.frames_per_state
         data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, frames_per_state,
-                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, 0.05, FLAGS.user_overwrite)
+                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, FLAGS.epsilon, FLAGS.user_overwrite)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 

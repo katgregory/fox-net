@@ -231,7 +231,7 @@ class FoxNetModel(object):
                        training_now=False,
                        dt="",
                        plot=False,
-                       plot_every=20,
+                       plot_every=1,
                        ):
 
         losses = []
@@ -266,7 +266,9 @@ class FoxNetModel(object):
                     data_manager.epsilon *= 0.9
 
                 # Plot loss every "plot_every" batches (overwrites prev plot)
-                if plot and (total_batch_count % plot_every == 0):
+                print('total_batch_count=%d\tplot_every=%d' % (total_batch_count, plot_every))
+                if plot and total_batch_count % plot_every == 0:
+                    print('Plotting: total_batch_count=%d' % total_batch_count)
                     losses.append(loss)
                     scores.append(max_score_batch)
                     xlabels.append(total_batch_count)
@@ -286,18 +288,18 @@ def make_classification_plot(plot_name, train, validate_incrementally, validate,
     plt.legend()
     plt.grid(True)
     plt.title(plot_name)
-    plt.xlabel('epoch number')
-    plt.ylabel('epoch ' + plot_name)
+    plt.xlabel('Epoch number')
+    plt.ylabel('Epoch ' + plot_name)
     plt.savefig(results_dir + "classification_" + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()
 
 # Overwrites previous plot each time
 def make_q_plot(plot_name, x, y, results_dir, dt):
-    line = plt.plot(x, y, label="Q " + plot_name)
+    line = plt.plot(x, y, label="Q-learning " + plot_name)
     plt.legend()
     plt.grid(True)
     plt.title(plot_name)
-    plt.xlabel('batch number')
+    plt.xlabel('Batch number')
     plt.ylabel(plot_name)
     plt.savefig(results_dir + "q_" + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()
