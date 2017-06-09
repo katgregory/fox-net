@@ -165,7 +165,7 @@ def run_model():
         print('Saved model to dir: %s' % model_dir)
 
     # Validate the model
-    if (FLAGS.validate and not FLAGS.train_online):
+    if (FLAGS.validate and not FLAGS.train_online and not FLAGS.qlearning):
         print("##### VALIDATING ##########################################")
         foxnet.run_validation(data_manager, session)
 

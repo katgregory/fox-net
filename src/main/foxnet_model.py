@@ -41,6 +41,7 @@ class FoxNetModel(object):
         self.available_actions = available_actions
         self.available_actions_names = available_actions_names
         self.num_actions = len(self.available_actions)
+        self.q_learning = q_learning
 
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
@@ -211,17 +212,25 @@ class FoxNetModel(object):
 
         data_manager.init_epoch(for_eval=True)
         while data_manager.has_next_batch(for_eval=True):
-            s_batch, a_batch, _, _ = data_manager.get_next_batch(for_eval=True)
+            s_batch, a_batch, r_batch, _ = data_manager.get_next_batch(for_eval=True)
             batch_size = s_batch.shape[0]
 
             correct_validation = tf.equal(tf.argmax(self.probs, 1), a_batch)
             variables = [self.loss, correct_validation]
 
-            feed_dict = {
-                self.X: s_batch,
-                self.y: a_batch,
-                self.is_training: False
-            }
+            if self.q_learning:
+                feed_dict = {
+                    self.X: s_batch,
+                    self.rewards: r_batch,
+                    self.actions: a_batch,
+                    self.is_training: False
+                }
+            else:
+                feed_dict = {
+                    self.X: s_batch,
+                    self.y: a_batch,
+                    self.is_training: False
+                }
 
             loss, correct = session.run(variables, feed_dict=feed_dict)
 
