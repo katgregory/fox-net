@@ -21,6 +21,7 @@ class FoxNet(object):
     #############################
 
     def __init__(self,
+                session,
                 model,
                 q_learning,
                 lr,
@@ -35,6 +36,8 @@ class FoxNet(object):
                 available_actions_names,
                 cnn_filter_size,
                 cnn_n_filters,
+                load_model,
+                load_model_path,
                 save_model,
                 save_model_path,
                 verbose = False):
@@ -56,13 +59,13 @@ class FoxNet(object):
         # The first dim is None, and gets sets automatically based on batch size fed in
         # count (in train/test set) x 480 (height) x 680 (width) x 3 (channels) x 3 (num frames)
         if model == "dqn_3d":
-            self.states = ph(tf.float32, [None, frames_per_state, height, width, n_channels])
-            self.states_p = ph(tf.float32, [None, frames_per_state, height, width, n_channels])
+            self.states = ph(tf.float32, [None, frames_per_state, height, width, n_channels], name="states")
+            self.states_p = ph(tf.float32, [None, frames_per_state, height, width, n_channels], name="states_p")
         else:
-            self.states = ph(tf.float32, [None, height, width, n_channels])
-            self.states_p = ph(tf.float32, [None, height, width, n_channels])
-        self.actions = ph(tf.int64, [None])
-        self.is_training = ph(tf.bool)
+            self.states = ph(tf.float32, [None, height, width, n_channels], name="states")
+            self.states_p = ph(tf.float32, [None, height, width, n_channels], name="states_p")
+        self.actions = ph(tf.int64, [None], name="actions")
+        self.is_training = ph(tf.bool, name="is_training")
 
         # Build net
         if model == "fc":
@@ -104,10 +107,15 @@ class FoxNet(object):
             reg_loss = tf.add_n([tf.nn.l2_loss(v) for v in variables if 'bias' not in v.name]) * reg_lambda
             self.loss += reg_loss
 
-        # Define optimizer
-        optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
-        vars_to_minimize = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='q')
-        self.train_step = optimizer.minimize(self.loss, var_list=vars_to_minimize)
+        if load_model:
+            print('Loading model from dir: %s' % load_model_dir)
+            loader = tf.train.import_meta_graph(load_model_path + '.meta')
+            loader.restore(session, tf.train.latest_checkpoint(load_model_dir))
+        else:
+            # Define optimizer
+            optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
+            vars_to_minimize = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='q')
+            self.train_step = optimizer.minimize(self.loss, var_list=vars_to_minimize)
 
     def add_q_learning_update_target_op(self, q_scope, target_q_scope):
         source_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=q_scope)

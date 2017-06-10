@@ -89,8 +89,9 @@ def get_model_path(model_name):
     model_path = model_dir + '/' + model_name
     return model_dir, model_path
 
-def construct_model_with_flags(flags, save_model_path):
+def construct_model_with_flags(session, flags, load_model_path=None, save_model_path=None):
     return FoxNet(
+                session,
                 flags['model'],
                 flags['qlearning'],
                 flags['lr'],
@@ -105,6 +106,8 @@ def construct_model_with_flags(flags, save_model_path):
                 ACTION_NAMES,
                 flags['cnn_filter_size'],
                 flags['cnn_num_filters'],
+                flags['load_model'],
+                load_model_path,
                 flags['save_model'],
                 save_model_path
             )
@@ -119,22 +122,19 @@ def get_model():
 
     # Construct relevant file names and paths for loading / saving models
     load_model_dir, load_model_path = get_model_path(FLAGS.load_model_dir)
+    save_model_dir, save_model_path = get_model_path(FLAGS.save_model_dir)
 
-    # Saver
+    # Get model flags
     if FLAGS.load_model:
-        print('Loading model from dir: %s' % load_model_dir)
-        loader = tf.train.import_meta_graph(load_model_path + '.meta')
-        loader.restore(session, tf.train.latest_checkpoint(load_model_dir))
         loading_flags_files = [filename for filename in os.listdir(FLAGS.results_dir + "flags") if filename.startswith(FLAGS.load_model_dir + "_")]
         loading_flag_file = FLAGS.results_dir + "flags" + "/" + loading_flags_files[-1]
         with open(loading_flag_file, 'r') as f:
             model_flags = json.load(f)
     else:
         model_flags = FLAGS.__flags
-    save_model_dir, save_model_path = get_model_path(FLAGS.save_model_dir)
 
     # Initialize a FoxNet model.
-    foxnet = construct_model_with_flags(model_flags, save_model_path)
+    foxnet = construct_model_with_flags(session, model_flags, load_model_path, save_model_path)
 
     # Set up saver
     foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
