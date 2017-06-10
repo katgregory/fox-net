@@ -207,12 +207,14 @@ class DataManager:
             start_idx = (self.batch_iteration * self.batch_size) % s_to_batch.shape[0]
             idx = self.epoch_indices[start_idx: start_idx + self.batch_size]
 
+            start_p_idx = start_idx + 1 % s_to_batch.shape[0]
+            p_idx = self.epoch_indices[start_p_idx: start_p_idx + self.batch_size]
+
             s_batch = s_to_batch[idx, :]
             a_batch = a_to_batch[idx]
             if not for_eval:
                 r_batch = r_to_batch[idx]
-
-            raise Exception('Need to implement s_p_batch for offline learning, I think. -Josh')
+            s_p_batch = s_to_batch[p_idx]
 
         # print('Max score for current batch: %d' % max_score_batch)
         return s_batch, a_batch, r_batch, s_p_batch, max_score_batch
