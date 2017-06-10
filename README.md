@@ -18,8 +18,7 @@ For example:
 --train_online=True
 --user_overwrite=True
 --verbose=True
---model=fc
---epsilon=0.05
+--model=dqn
 
 
 To run the emulator:
