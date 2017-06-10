@@ -72,7 +72,7 @@ def record_params():
         f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
     f.close()
     # Dump flags in case we want to load this model later
-    with open(FLAGS.results_dir + "flags" + "/" + dt + ".json","w+") as f:
+    with open(FLAGS.results_dir + "flags" + "/" + FLAGS.save_model_dir + "_" + dt + ".json","w+") as f:
         json.dump(FLAGS.__flags, f)
     return dt
 
