@@ -44,7 +44,6 @@ class HealthExtractor():
         if health_ratio <= 0.01:
             health_ratio = 0.0
 
-        health_ratio = int(10*health_ratio)
         return health_ratio
 
     def is_red_frame(self, image):
