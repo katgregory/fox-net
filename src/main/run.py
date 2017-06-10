@@ -88,6 +88,26 @@ def get_model_path(model_name):
     model_path = model_dir + '/' + model_name
     return model_dir, model_path
 
+def construct_model_with_flags(flags, save_model_path):
+    return FoxNet(
+                flags['model'],
+                flags['qlearning'],
+                flags['lr'],
+                flags['reg_lambda'],
+                flags['use_target_net'],
+                flags['target_q_update_freq'],
+                flags['image_height'],
+                flags['image_width'],
+                flags['num_channels'],
+                flags['frames_per_state'],
+                ACTIONS,
+                ACTION_NAMES,
+                flags['cnn_filter_size'],
+                flags['cnn_num_filters'],
+                flags['save_model'],
+                save_model_path
+            )
+
 def get_model():
     # Reset every time
     tf.reset_default_graph()
@@ -104,28 +124,12 @@ def get_model():
         print('Loading model from dir: %s' % load_model_dir)
         loader = tf.train.import_meta_graph(load_model_path + '.meta')
         loader.restore(session, tf.train.latest_checkpoint(load_model_dir))
+    else:
+        model_flags = FLAGS.__flags
     save_model_dir, save_model_path = get_model_path(FLAGS.save_model_dir)
 
     # Initialize a FoxNet model.
-    # TODO load flag values if saved
-    foxnet = FoxNet(
-                FLAGS.model,
-                FLAGS.qlearning,
-                FLAGS.lr,
-                FLAGS.reg_lambda,
-                FLAGS.use_target_net,
-                FLAGS.target_q_update_freq,
-                FLAGS.image_height,
-                FLAGS.image_width,
-                FLAGS.num_channels,
-                FLAGS.frames_per_state,
-                ACTIONS,
-                ACTION_NAMES,
-                FLAGS.cnn_filter_size,
-                FLAGS.cnn_num_filters,
-                FLAGS.save_model,
-                save_model_path
-            )
+    foxnet = construct_model_with_flags(model_flags, save_model_path)
 
     # Set up saver
     foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
