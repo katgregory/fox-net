@@ -72,7 +72,8 @@ def record_params():
         f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
     f.close()
     # Dump flags in case we want to load this model later
-    with open(FLAGS.results_dir + "flags" + "/" + FLAGS.save_model_dir + "_" + dt + ".json","w+") as f:
+    saving_flags_file = FLAGS.results_dir + "flags" + "/" + FLAGS.save_model_dir + "_" + dt + ".json"
+    with open(saving_flags_file, "w+") as f:
         json.dump(FLAGS.__flags, f)
     return dt
 
@@ -124,6 +125,10 @@ def get_model():
         print('Loading model from dir: %s' % load_model_dir)
         loader = tf.train.import_meta_graph(load_model_path + '.meta')
         loader.restore(session, tf.train.latest_checkpoint(load_model_dir))
+        loading_flags_files = [filename for filename in os.listdir(FLAGS.results_dir + "flags") if filename.startswith(FLAGS.load_model_dir + "_")]
+        loading_flag_file = FLAGS.results_dir + "flags" + "/" + loading_flags_files[-1]
+        with open(loading_flag_file, 'r') as f:
+            model_flags = json.load(f)
     else:
         model_flags = FLAGS.__flags
     save_model_dir, save_model_path = get_model_path(FLAGS.save_model_dir)
