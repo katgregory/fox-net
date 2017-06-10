@@ -41,7 +41,7 @@ tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
 
 # TARGET NETWORK
-tf.app.flags.DEFINE_bool("use_target_net", False, "")
+tf.app.flags.DEFINE_bool("use_target_net", True, "")
 tf.app.flags.DEFINE_float("tau", 0.001, "Soft target update factor.")
 tf.app.flags.DEFINE_integer("target_q_update_freq", 10, "")
 
