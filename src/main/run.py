@@ -6,9 +6,7 @@ import sys
 import tensorflow as tf
 
 from foxnet import FoxNet
-from emu_interact import FrameReader
 from data_manager import DataManager
-from scipy.misc import imresize
 
 
 # COMMAND LINE ARGUMENTS
