@@ -70,14 +70,14 @@ def initialize_model(session, model):
 def record_params():
     dt = str(datetime.datetime.now())
     # Record params
-#    f = open(FLAGS.results_dir + "params" + "/" + dt + ".txt","w+")
-#    f.write(" ".join(sys.argv) + "\n\n")
-#    for flag in FLAGS.__flags:
-#        f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
-#    f.close()
+    f = open(FLAGS.results_dir + "params" + "/" + dt + ".txt","w+")
+    f.write(" ".join(sys.argv) + "\n\n")
+    for flag in FLAGS.__flags:
+        f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
+    f.close()
     # Dump flags in case we want to load this model later
-#    with open(FLAGS.results_dir + "flags" + "/" + dt + ".json","w+") as f:
-            #        json.dump(FLAGS.__flags, f)
+    with open(FLAGS.results_dir + "flags" + "/" + dt + ".json","w+") as f:
+        json.dump(FLAGS.__flags, f)
     return dt
 
 def run_model():
