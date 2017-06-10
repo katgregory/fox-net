@@ -26,7 +26,6 @@ class FoxNet(object):
                 lr,
                 reg_lambda,
                 use_target_net,
-                tau,
                 target_q_update_freq,
                 height,
                 width,
@@ -36,12 +35,13 @@ class FoxNet(object):
                 available_actions_names,
                 cnn_filter_size,
                 cnn_n_filters,
+                save_model,
+                save_model_path,
                 verbose = False):
 
         self.lr = lr
         self.reg_lambda = reg_lambda
         self.use_target_net = use_target_net
-        self.tau = tau
         self.target_q_update_freq = target_q_update_freq
         self.verbose = verbose
         self.available_actions = available_actions
@@ -49,6 +49,8 @@ class FoxNet(object):
         self.num_actions = len(self.available_actions)
         self.q_learning = q_learning
         self.gamma = 0.99
+        self.save_model = save_model
+        self.save_model_path = save_model_path
 
         # Placeholders
         # The first dim is None, and gets sets automatically based on batch size fed in
@@ -130,8 +132,6 @@ class FoxNet(object):
                            data_manager,
                            session,
                            epochs,
-                           model_path,
-                           save_model,
                            training_now=False,
                            validate_incrementally=False,
                            print_every=100,
@@ -154,7 +154,7 @@ class FoxNet(object):
             data_manager.init_epoch()
 
             while data_manager.has_next_batch():
-                s_batch, a_batch, _, _ = data_manager.get_next_batch()
+                s_batch, a_batch, _, _, _ = data_manager.get_next_batch()
 
                 # Have tensorflow compute accuracy.
                 # TODO BUG: When using batches, seems to compare arrs of size (batch_size,) and (total_size,)
@@ -205,9 +205,7 @@ class FoxNet(object):
                 print("         Validation       loss = {0:.3g} and accuracy of {1:.3g}"\
                   .format(val_loss, val_accuracy, e+1))
 
-            if save_model:
-                print("-- saving model --")
-                self.saver.save(session, model_path)
+            self.save(session)
 
             # Update plot after every epoch (overwrites old version)
             if plot:
@@ -279,8 +277,6 @@ class FoxNet(object):
                        data_manager,
                        session,
                        epochs,
-                       model_path,
-                       save_model,
                        results_dir,
                        training_now=False,
                        dt="",
@@ -319,11 +315,10 @@ class FoxNet(object):
                 if self.use_target_net and total_batch_count % self.target_q_update_freq:
                     self.update_target_params(session)
 
-                if save_model and total_batch_count % 100 == 0:
-                    print('Saving model.')
-                    self.saver.save(session, model_path)
+                if total_batch_count % 100 == 0:
                     # Anneal epsilon
                     data_manager.epsilon *= 0.9
+                    self.save(session)
 
                 # Plot loss every "plot_every" batches (overwrites prev plot)
                 if plot and total_batch_count % plot_every == 0:
@@ -336,6 +331,11 @@ class FoxNet(object):
 
                 batch_count += 1
                 total_batch_count += 1
+
+    def save(self, session):
+        if self.save_model:
+            print("-- saving model --")
+            self.saver.save(session, self.save_model_path)
 
 def format_list(list):
     return "["+", ".join(["%.2f" % x for x in list])+"]"

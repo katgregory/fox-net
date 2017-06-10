@@ -216,10 +216,5 @@ class DataManager:
                 r_batch = r_to_batch[idx][:capped_length]
             s_p_batch = s_to_batch[p_idx][:capped_length]
 
-            print(s_batch.shape[0])
-            print(a_batch.shape[0])
-            print(r_batch.shape[0])
-            print(s_p_batch.shape[0])
-
         # print('Max score for current batch: %d' % max_score_batch)
         return s_batch, a_batch, r_batch, s_p_batch, max_score_batch
