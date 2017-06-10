@@ -40,6 +40,7 @@ tf.app.flags.DEFINE_float("lr", 0.000004, "Learning rate.")
 tf.app.flags.DEFINE_float("reg_lambda", .01, "Regularization")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "")
 tf.app.flags.DEFINE_float("epsilon", 0.05, "E-greedy exploration rate.")
+tf.app.flags.DEFINE_float("health_weight", 10.0, "Amount to weight health reward.")
 
 # TARGET NETWORK
 tf.app.flags.DEFINE_bool("use_target_net", True, "")
@@ -123,7 +124,8 @@ def run_model():
         if FLAGS.model == "dqn_3d":
             frames_per_state = FLAGS.frames_per_state
         data_manager.init_online(foxnet, session, FLAGS.batch_size, FLAGS.replay_buffer_size, frames_per_state,
-                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, FLAGS.epsilon, FLAGS.user_overwrite)
+                                 FLAGS.ip, FLAGS.image_height, FLAGS.image_width, FLAGS.epsilon, FLAGS.health_weight,
+                                 FLAGS.user_overwrite)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
 

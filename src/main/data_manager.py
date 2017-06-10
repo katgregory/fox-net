@@ -15,12 +15,13 @@ class DataManager:
         self.verbose = verbose
 
     def init_online(self, foxnet, session, batch_size, replay_buffer_size, frames_per_state, ip, image_height,
-                    image_width, epsilon, user_overwrite=False):
+                    image_width, epsilon, health_weight, user_overwrite=False):
         self.is_online = True
         self.foxnet = foxnet
         self.session = session
         self.batch_size = batch_size
         self.epsilon = epsilon
+        self.health_weight = health_weight
 
         # Allow player to overwrite for faster learning
         self.user_overwrite = user_overwrite
@@ -176,11 +177,11 @@ class DataManager:
                 if self.prev_health and self.prev_health > 0 and health_reward == 0:
                     # Agent just died.
                     if self.verbose:
-                        print('Agent just died. Setting health reward to -10.')
-                    health_reward = -10
+                        print('Agent just died. Setting health reward to -1.')
+                    health_reward = -1.0
                 self.prev_health = health_reward
 
-                reward = score_reward + health_reward
+                reward = score_reward + self.health_weight * health_reward
                 max_score_batch = max(score_reward, max_score_batch)
 
                 # Store the <s,a,r,s'> transition.
