@@ -9,6 +9,8 @@ A possible application of our system could be the control systems for an autonom
 
 Note that our code lies on two different branches. For classification, check out the "main" branch; for q-learning, check out the "prime" branch.
 
+The code in src/main/replay_buffer.py was borrowed from Assignment 2 in CS234 and src/main/saliency.py from Assignment 3 in CS231N. 
+
 From this directory, run:
 
 python src/main/run.py
