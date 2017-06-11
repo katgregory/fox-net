@@ -209,12 +209,12 @@ class DataManager:
 
             start_p_idx = start_idx + 1 % s_to_batch.shape[0]
             p_idx = self.epoch_indices[start_p_idx: start_p_idx + self.batch_size]
-
-            s_batch = s_to_batch[idx, :]
-            a_batch = a_to_batch[idx]
+            capped_length = len(p_idx) # Prevent problem if (start_p_idx + self.batch_size > len(self.epoch_indices)
+            s_batch = s_to_batch[idx, :][:capped_length]
+            a_batch = a_to_batch[idx][:capped_length]
             if not for_eval:
-                r_batch = r_to_batch[idx]
-            s_p_batch = s_to_batch[p_idx]
+                r_batch = r_to_batch[idx][:capped_length]
+            s_p_batch = s_to_batch[p_idx][:capped_length]
 
         # print('Max score for current batch: %d' % max_score_batch)
         return s_batch, a_batch, r_batch, s_p_batch, max_score_batch

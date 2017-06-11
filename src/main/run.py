@@ -6,9 +6,7 @@ import sys
 import tensorflow as tf
 
 from foxnet import FoxNet
-from emu_interact import FrameReader
 from data_manager import DataManager
-from scipy.misc import imresize
 
 
 # COMMAND LINE ARGUMENTS
@@ -22,14 +20,19 @@ tf.app.flags.DEFINE_float("eval_proportion", 0.2, "") # TODO: Right now, breaks 
 tf.app.flags.DEFINE_bool("plot", True, "")
 tf.app.flags.DEFINE_bool("verbose", False, "")
 
+# MODEL SAVING
 tf.app.flags.DEFINE_bool("load_model", False, "")
+tf.app.flags.DEFINE_string("load_model_dir", "load_model", "Directory with a saved model's files.")
 tf.app.flags.DEFINE_bool("save_model", True, "")
-tf.app.flags.DEFINE_string("model_dir", "sample_model", "Directory with a saved model's files.")
+tf.app.flags.DEFINE_string("save_model_dir", "sample_model", "Directory in which to save this model's files.")
+
+# TRAINING
 tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
 tf.app.flags.DEFINE_bool("user_overwrite", False, "")
 tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback.")
+
 # LAYER SIZES
 tf.app.flags.DEFINE_integer("cnn_filter_size", 7, "Size of filter.")
 tf.app.flags.DEFINE_integer("cnn_num_filters", 32, "Filter count.")
@@ -44,7 +47,6 @@ tf.app.flags.DEFINE_float("health_weight", 10.0, "Amount to weight health reward
 
 # TARGET NETWORK
 tf.app.flags.DEFINE_bool("use_target_net", True, "")
-tf.app.flags.DEFINE_float("tau", 0.001, "Soft target update factor.")
 tf.app.flags.DEFINE_integer("target_q_update_freq", 10, "")
 
 # INFRASTRUCTURE
@@ -61,13 +63,6 @@ ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'do nothing']
 
 FLAGS = tf.app.flags.FLAGS
 
-def initialize_model(session, model):
-    print("##### MODEL ###############################################")
-    session.run(tf.global_variables_initializer())
-    print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
-    print("Flags: " + str(FLAGS.__flags))
-    return model
-
 def record_params():
     dt = str(datetime.datetime.now())
     # Record params
@@ -77,11 +72,47 @@ def record_params():
         f.write(flag + ":" + str(FLAGS.__flags[flag]) + "\n")
     f.close()
     # Dump flags in case we want to load this model later
-    with open(FLAGS.results_dir + "flags" + "/" + dt + ".json","w+") as f:
+    saving_flags_file = FLAGS.results_dir + "flags" + "/" + FLAGS.save_model_dir + "_" + dt + ".json"
+    with open(saving_flags_file, "w+") as f:
         json.dump(FLAGS.__flags, f)
     return dt
 
-def run_model():
+def initialize_model(session, model):
+    print("##### MODEL ###############################################")
+    session.run(tf.global_variables_initializer())
+    print('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
+    print("Flags: " + str(FLAGS.__flags))
+    return model
+
+def get_model_path(model_name):
+    model_dir = './models/%s' % model_name
+    model_path = model_dir + '/' + model_name
+    return model_dir, model_path
+
+def construct_model_with_flags(session, flags, load_model_path=None, save_model_path=None):
+    return FoxNet(
+                session,
+                flags['model'],
+                flags['qlearning'],
+                flags['lr'],
+                flags['reg_lambda'],
+                flags['use_target_net'],
+                flags['target_q_update_freq'],
+                flags['image_height'],
+                flags['image_width'],
+                flags['num_channels'],
+                flags['frames_per_state'],
+                ACTIONS,
+                ACTION_NAMES,
+                flags['cnn_filter_size'],
+                flags['cnn_num_filters'],
+                flags['load_model'],
+                load_model_path,
+                flags['save_model'],
+                save_model_path
+            )
+
+def get_model():
     # Reset every time
     tf.reset_default_graph()
     tf.set_random_seed(1)
@@ -89,35 +120,34 @@ def run_model():
     # Get the session.
     session = tf.Session()
 
+    # Construct relevant file names and paths for loading / saving models
+    load_model_dir, load_model_path = get_model_path(FLAGS.load_model_dir)
+    save_model_dir, save_model_path = get_model_path(FLAGS.save_model_dir)
+
+    # Get model flags
+    if FLAGS.load_model:
+        loading_flags_files = [filename for filename in os.listdir(FLAGS.results_dir + "flags") if filename.startswith(FLAGS.load_model_dir + "_")]
+        loading_flag_file = FLAGS.results_dir + "flags" + "/" + loading_flags_files[-1]
+        with open(loading_flag_file, 'r') as f:
+            model_flags = json.load(f)
+    else:
+        model_flags = FLAGS.__flags
+
     # Initialize a FoxNet model.
-    foxnet = FoxNet(
-                FLAGS.model,
-                FLAGS.qlearning,
-                FLAGS.lr,
-                FLAGS.reg_lambda,
-                FLAGS.use_target_net,
-                FLAGS.tau,
-                FLAGS.target_q_update_freq,
-                FLAGS.image_height,
-                FLAGS.image_width,
-                FLAGS.num_channels,
-                FLAGS.frames_per_state,
-                ACTIONS,
-                ACTION_NAMES,
-                FLAGS.cnn_filter_size,
-                FLAGS.cnn_num_filters
-            )
+    foxnet = construct_model_with_flags(session, model_flags, load_model_path, save_model_path)
 
+    # Set up saver
     foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
-    model_dir = './models/%s' % FLAGS.model_dir
-    model_name = '%s' % FLAGS.model_dir
-    model_path = model_dir + '/' + model_name
+    if FLAGS.save_model and not os.path.exists(save_model_dir):
+        os.makedirs(save_model_dir)
 
+    # Initialize model's global variables
     initialize_model(session, foxnet)
 
-    dt = record_params()
+    return session, foxnet
 
-    # Initialize a data manager.
+# Returns a configured data manager
+def initialize_data_manager(foxnet, session):
     data_manager = DataManager(FLAGS.verbose)
     if FLAGS.train_online:
         frames_per_state = 1
@@ -128,56 +158,44 @@ def run_model():
                                  FLAGS.user_overwrite)
     else:
         data_manager.init_offline(FLAGS.test, get_data_params(), FLAGS.batch_size)
+    return data_manager
 
-    # Load pretrained model
-    if FLAGS.load_model:
-        # Create an object to get emulator frames
-        # frame_reader = FrameReader(FLAGS.ip, FLAGS.image_height, FLAGS.image_width)
+def run_model():
+    # Starting a new training session!
+    dt = record_params()
+    print("Session timestamp: " + dt)
 
-        # Load the model
-        model_dir = './models/%s/' % (FLAGS.model_dir)
-        model_name = '%s' % (FLAGS.model_dir)
-        print('Loading model from dir: %s' % model_dir)
-        foxnet.saver.restore(session, tf.train.latest_checkpoint(model_dir))
-        # sv = tf.train.Supervisor(logdir=model_dir)
-        # with sv.managed_session() as session:
+    # Either load the specified model or create a new one with the given flags
+    session, foxnet = get_model()
 
-            # if not sv.should_stop():
-            #     if FLAGS.train_online == True:
-            #         foxnet.run_q_learning(data_manager, session)
+    # Initialize a data manager
+    data_manager = initialize_data_manager(foxnet, session)
+
+    # Train the model, using Q-learning or classification.
+    print("##### TRAINING ############################################")
+    if FLAGS.qlearning:
+        foxnet.run_q_learning(data_manager, 
+                                session, 
+                                FLAGS.num_epochs, 
+                                results_dir=FLAGS.results_dir,
+                                plot=FLAGS.plot,
+                                dt=dt
+                                )
     else:
-        # Train a new model.
-       
-        print("dt = " + dt)
-
-        print("##### TRAINING ############################################")
-        # Run Q-learning or classification.
-        if FLAGS.qlearning:
-            foxnet.run_q_learning(data_manager, session, FLAGS.num_epochs, model_path, save_model=FLAGS.save_model, results_dir=FLAGS.results_dir,
-                                  plot=FLAGS.plot, dt=dt)
-        else:
-            foxnet.run_classification(data_manager,
-                                      session,
-                                      epochs=FLAGS.num_epochs,
-                                      model_path=model_path,
-                                      save_model=FLAGS.save_model,
-                                      training_now=True,
-                                      validate_incrementally=FLAGS.validate_incrementally,
-                                      print_every=1,
-                                      plot=FLAGS.plot,
-                                      results_dir=FLAGS.results_dir,
-                                      dt=dt
-                                      )
+        # Classification no longer works on this branch
+        foxnet.run_classification(data_manager,
+                                  session,
+                                  epochs=FLAGS.num_epochs,
+                                  training_now=True,
+                                  validate_incrementally=FLAGS.validate_incrementally,
+                                  print_every=1,
+                                  plot=FLAGS.plot,
+                                  results_dir=FLAGS.results_dir,
+                                  dt=dt
+                                  )
 
     # Save the model
-    if FLAGS.save_model:
-        # Save model
-        model_dir = './models/%s' % (FLAGS.model_dir)
-        model_name = '%s' % (FLAGS.model_dir)
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-        foxnet.saver.save(session, model_dir + '/' + model_name)
-        print('Saved model to dir: %s' % model_dir)
+    foxnet.save(session)
 
     # Validate the model
     if (FLAGS.validate and not FLAGS.train_online and not FLAGS.qlearning):
