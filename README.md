@@ -19,7 +19,9 @@ For example:
 --user_overwrite=True
 --verbose=True
 --model=dqn
-
+--batch_size=10
+--target_q_update_freq=1
+--health_weight=0
 
 To run the emulator:
 > cd src/emulator
