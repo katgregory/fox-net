@@ -320,7 +320,7 @@ class FoxNet(object):
                 print('Loss: %f' % loss)
                 print('Batch reward: %f' % batch_reward)
 
-                if self.use_target_net and total_batch_count % self.target_q_update_freq:
+                if self.use_target_net and (total_batch_count % self.target_q_update_freq == 0):
                     self.update_target_params(session)
 
                 if total_batch_count % 100 == 0:
