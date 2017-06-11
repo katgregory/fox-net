@@ -103,6 +103,7 @@ class DataManager:
             i = 0
             last_action_str = 'n'
             last_frame_was_a_menu = False
+
             while i < self.batch_size or not self.replay_buffer.can_sample(self.batch_size):
                 i += 1
                 for j in np.arange(frame_skip):
@@ -131,6 +132,15 @@ class DataManager:
                     if self.verbose:
                         print('NO SCORE DETECTED: Pressing l or j. '
                               'Taking action: %s' % action_str)
+                elif i > 5:
+                    diff = np.sum(np.abs(full_image - self.prev_full_image)) / (full_image.size * 255)
+                    print('i=%d\tdiff=%s' % (i, str(diff)))
+                    # Check if the first frame and last frame are the same. If so, the game is (hopefully) paused and pressing
+                    # 'l' should un-pause it.
+                    if diff < 0.001:
+                        action_str = 'l'
+                        if self.verbose:
+                            print('GAME IS PAUSED (hopefully: Pressing l.')
                 else:
                     feed_dict = {self.foxnet.states: state, self.foxnet.is_training: False}
                     q_values = self.session.run(self.foxnet.q_values,
@@ -156,7 +166,7 @@ class DataManager:
                 last_action_str = action_str
 
                 # Determine the action we will send to the replay buffer.
-                if last_frame_was_a_menu:
+                if action_str == 'l':
                     # If the last frame was a menu/video, pretend we just did a noop.
                     replay_buffer_str = self.foxnet.available_actions.index('n')
                 else:
