@@ -127,8 +127,8 @@ class FoxNet(object):
     def add_q_learning_loss_op(self, q, target_q, num_actions):
         target = self.rewards + self.gamma * tf.reduce_max(self.q_values_p, axis=1)
         action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
-        self.prediction = tf.reduce_sum(self.q_values*action_mask, axis=1)
-        self.loss = tf.reduce_sum(tf.square((target - self.prediction)))
+        prediction = tf.reduce_sum(self.q_values*action_mask, axis=1)
+        self.loss = tf.reduce_sum(tf.square((target - prediction)))
 
     def update_target_params(self, session):
         session.run(self.update_target_op)
