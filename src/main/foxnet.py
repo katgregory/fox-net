@@ -117,6 +117,9 @@ class FoxNet(object):
             optimizer = tf.train.AdamOptimizer(self.lr) # Select optimizer and set learning rate
             vars_to_minimize = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='q')
             self.train_step = optimizer.minimize(self.loss, var_list=vars_to_minimize)
+            # Doesn't work if you've already loaded a model
+            self.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
+
 
     def add_q_learning_update_target_op(self, q_scope, target_q_scope):
         source_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=q_scope)

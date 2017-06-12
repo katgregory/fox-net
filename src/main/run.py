@@ -115,7 +115,6 @@ def construct_model_with_flags(session, flags, load_model, load_model_dir=None, 
 
 def load_flags(results_dir, load_model_dir):
     loading_flags_files = [filename for filename in os.listdir(results_dir + "flags") if filename.startswith(load_model_dir + "_")]
-    print(load_model_dir + "_")
     if len(loading_flags_files) == 0:
         print("Uh oh! Can't find flag file for model to load. Remember, should be ./results/flags/[load_model_dir name]_[timestamp]")
         assert(0)
@@ -148,8 +147,7 @@ def get_model():
     # Initialize a FoxNet model.
     foxnet = construct_model_with_flags(session, model_flags, FLAGS.load_model, load_model_dir, load_model_path, save_model_path)
 
-    # Set up saver
-    foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
+    # Set up saving
     if FLAGS.save_model and not os.path.exists(save_model_dir):
         os.makedirs(save_model_dir)
 
