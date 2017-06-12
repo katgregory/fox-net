@@ -115,7 +115,7 @@ def construct_model_with_flags(session, flags, load_model, load_model_dir=None, 
 
 def load_flags(results_dir, load_model_dir):
     loading_flags_files = [filename for filename in os.listdir(results_dir + "flags") if filename.startswith(load_model_dir + "_")]
-    print load_model_dir + "_"
+    print(load_model_dir + "_")
     if len(loading_flags_files) == 0:
         print("Uh oh! Can't find flag file for model to load. Remember, should be ./results/flags/[load_model_dir name]_[timestamp]")
         assert(0)
