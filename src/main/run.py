@@ -29,6 +29,7 @@ tf.app.flags.DEFINE_string("save_model_dir", "sample_model", "Directory in which
 # TRAINING
 tf.app.flags.DEFINE_bool("train_offline", False, "")
 tf.app.flags.DEFINE_bool("train_online", False, "")
+tf.app.flags.DEFINE_integer("max_batches", -1, "")
 tf.app.flags.DEFINE_bool("qlearning", False, "")
 tf.app.flags.DEFINE_bool("user_overwrite", False, "")
 tf.app.flags.DEFINE_string("ip", "127.0.0.1", "Specify host IP. Default is local loopback.")
@@ -187,6 +188,7 @@ def run_model():
         foxnet.run_q_learning(data_manager, 
                                 session, 
                                 FLAGS.num_epochs, 
+                                max_batches=FLAGS.max_batches,
                                 results_dir=FLAGS.results_dir,
                                 plot=FLAGS.plot,
                                 dt=dt

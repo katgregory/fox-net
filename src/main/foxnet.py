@@ -289,6 +289,7 @@ class FoxNet(object):
                        data_manager,
                        session,
                        epochs,
+                       max_batches,
                        results_dir,
                        training_now=False,
                        dt="",
@@ -343,6 +344,10 @@ class FoxNet(object):
 
                 batch_count += 1
                 total_batch_count += 1
+
+                # If we exceeed the total_batch count, end early
+                if total_batch_count == max_batches:
+                    return
 
     def save(self, session):
         if self.save_model:
