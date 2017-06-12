@@ -233,10 +233,17 @@ class FoxNetModel(object):
     def run_validation(self,
                        data_manager,
                        session,
+                       confusion=False,
+                       results_dir="",
+                       dt="",
                        print_results=True):
 
         total_correct = 0
         losses = []
+
+        if confusion:
+            confusion_predictions = []
+            confusion_labels = []
 
         data_manager.init_epoch(for_eval=True)
         while data_manager.has_next_batch(for_eval=True):
@@ -244,7 +251,7 @@ class FoxNetModel(object):
             batch_size = s_batch.shape[0]
 
             correct_validation = tf.equal(tf.argmax(self.probs, 1), a_batch)
-            variables = [self.loss, correct_validation]
+            variables = [self.loss, self.probs, correct_validation]
 
             if self.q_learning:
                 feed_dict = {
@@ -260,16 +267,31 @@ class FoxNetModel(object):
                     self.is_training: False
                 }
 
-            loss, correct = session.run(variables, feed_dict=feed_dict)
+            loss, probs, correct = session.run(variables, feed_dict=feed_dict)
 
             losses.append(loss * batch_size)
             total_correct += np.sum(correct)
+
+            if confusion:
+                predictions = tf.cast(tf.argmax(probs, 1), tf.int32)
+                confusion_predictions.append(predictions)
+                confusion_labels.append(tf.cast(a_batch, tf.int32))
 
         accuracy = total_correct * 1.0 / data_manager.s_eval.shape[0]
         total_loss = np.sum(losses) / data_manager.s_eval.shape[0]
 
         if print_results:
             print("Validation loss = \t{0:.3g}\nValidation accuracy = \t{1:.3g}".format(total_loss, accuracy))
+
+        if confusion:
+            print("Generating confusion matrix:")
+            confusion_labels = tf.concat(confusion_labels, 0)
+            confusion_predictions = tf.concat(confusion_predictions, 0)
+            confusion_matrix = tf.confusion_matrix(confusion_labels, confusion_predictions, num_classes = len(self.available_actions))
+            with session.as_default():
+                confusion_matrix = confusion_matrix.eval()
+                print(confusion_matrix)
+            make_confusion_matrix(confusion_matrix, self.available_actions_names, results_dir, dt)
 
         return total_loss, accuracy
 
@@ -356,3 +378,38 @@ def make_q_plot(plot_name, x, y, results_dir, dt):
     plt.ylabel(plot_name)
     plt.savefig(results_dir + "q_" + plot_name + "/" + plot_name + "_" + dt + ".png")
     plt.close()
+
+def make_confusion_matrix(conf_arr, axes, results_dir, dt):
+    norm_conf = []
+    for i in conf_arr:
+        a = 0
+        tmp_arr = []
+        a = sum(i, 0)
+        for j in i:
+            if a == 0:
+                tmp_arr.append(0)
+            else:
+                tmp_arr.append(float(j)/float(a))
+        norm_conf.append(tmp_arr)
+
+    fig = plt.figure()
+    plt.clf()
+    ax = fig.add_subplot(111)
+    ax.set_aspect(1)
+    res = ax.imshow(np.array(norm_conf), cmap=plt.cm.jet,
+                    interpolation='nearest')
+
+    width, height = conf_arr.shape
+
+    for x in xrange(width):
+        for y in xrange(height):
+            ax.annotate(str(conf_arr[x][y]), xy=(y, x),
+                        horizontalalignment='center',
+                        verticalalignment='center')
+
+    # cb = fig.colorbar(res)
+    plt.xticks(range(width), axes[:width])
+    plt.yticks(range(height), axes[:height])
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.savefig(results_dir + 'confusion_matrix/' + 'confusion_' + dt + '.png', format='png')

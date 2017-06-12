@@ -180,7 +180,7 @@ def run_model():
     # Validate the model
     if (FLAGS.validate and not FLAGS.train_online and not FLAGS.qlearning):
         print("##### VALIDATING ##########################################")
-        foxnet.run_validation(data_manager, session)
+        foxnet.run_validation(data_manager, session, confusion=True, results_dir=FLAGS.results_dir, dt=dt)
 
     # Close session
     session.close()
