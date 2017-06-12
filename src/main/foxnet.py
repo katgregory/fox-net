@@ -37,6 +37,7 @@ class FoxNet(object):
                 cnn_filter_size,
                 cnn_n_filters,
                 load_model,
+                load_model_dir,
                 load_model_path,
                 save_model,
                 save_model_path,

@@ -7,12 +7,15 @@ import tensorflow as tf
 
 from data import load_datasets
 from foxnet_model import FoxNetModel
+from run import get_model_path
+from run import construct_model_with_flags
+from run import load_flags
 
-model_dir = './models/trained_cnn/'
-model_name = 'sample_model'
-results_dir = './results/saliency/'
 ACTIONS = ['w', 'a', 's', 'd', 'j', 'k', 'l', 'n']
 ACTION_NAMES = ['up', 'left', 'down', 'right', 'fire', 'back', 'start', 'do nothing']
+
+model_to_load = 'kevin_highscoring_model'
+results_dir = './results/'
 
 def compute_saliency_maps(X, y, model):
     """
@@ -76,60 +79,43 @@ def show_saliency_maps(model, X, y, count=5, num_trials=5):
             plt.imshow(saliency[i], cmap=plt.cm.hot)
             plt.axis('off')
             plt.gcf().set_size_inches(10, 4)
-        plt.savefig(results_dir + "saliency" + str(trial) + ".png")
+        plt.savefig(results_dir + "saliency/saliency" + str(trial) + ".png")
         plt.close()
 
-# Load model
-print("##### LOADING MODEL #######################################")
-print('From dir: %s' % model_dir)
-tf.reset_default_graph()
-sess=tf.Session()
-saver = tf.train.import_meta_graph(model_dir + model_name + '.meta')
-saver.restore(sess, tf.train.latest_checkpoint(model_dir))
+def main(_):
+    # Load model
+    print("##### LOADING MODEL #######################################")
+    load_model_dir, load_model_path = get_model_path(model_to_load)
+    print('From dir: %s' % load_model_dir)
 
-foxnet = FoxNetModel(
-                model='simple_cnn',
-                q_learning='False',
-                lr=0.000004,
-                reg_lambda=-1,
-                use_target_net=False,
-                tau=.99,
-                target_q_update_freq=10,
-                height=48,
-                width=64,
-                n_channels=3,
-                frames_per_state=1,
-                available_actions=ACTIONS,
-                available_actions_names=ACTION_NAMES,
-                cnn_filter_size=7,
-                cnn_n_filters=32
-            )
+    tf.reset_default_graph()
+    sess = tf.Session()
 
-sess.run(tf.global_variables_initializer())
+    flags = load_flags(results_dir, model_to_load)
+    foxnet = construct_model_with_flags(sess, flags, True, load_model_dir, load_model_path, "")
 
-# graph = tf.get_default_graph()
-# for var in tf.global_variables():
-#     print(var)
-# print([var for var in tf.all_variables()])
-# graph.get_tensor_by_name('X')
+    sess.run(tf.global_variables_initializer())
 
-# Load data
-def get_data_params():
-    return {
-        "data_dir": './data/data_053017/',
-        "num_images": 1000,
-        "width": 64,
-        "height": 48,
-        "multi_frame_state": False,
-        "frames_per_state": 1,
-        "actions": ACTIONS,
-        "eval_proportion": .5,
-        "image_size": 28,
-    }
+    # Load data
+    def get_data_params():
+        return {
+            "data_dir": './data/data_053017/',
+            "num_images": 1000,
+            "width": 64,
+            "height": 48,
+            "multi_frame_state": False,
+            "frames_per_state": 1,
+            "actions": ACTIONS,
+            "eval_proportion": .5,
+            "image_size": 28,
+        }
 
-all_data, _ = load_datasets("test", get_data_params())
-s, a, scores, h = all_data
+    all_data, _ = load_datasets("test", get_data_params())
+    s, a, scores, h = all_data
 
-print("##### SALIENCY MAPS #######################################")
-# Generate 5 options
-show_saliency_maps(foxnet, s, a)
+    print("##### SALIENCY MAPS #######################################")
+    # Generate 5 options
+    show_saliency_maps(foxnet, s, a)
+
+if __name__ == "__main__":
+    tf.app.run()

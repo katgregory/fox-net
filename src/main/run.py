@@ -89,7 +89,7 @@ def get_model_path(model_name):
     model_path = model_dir + '/' + model_name
     return model_dir, model_path
 
-def construct_model_with_flags(session, flags, load_model_path=None, save_model_path=None):
+def construct_model_with_flags(session, flags, load_model, load_model_dir=None, load_model_path=None, save_model_path=None):
     return FoxNet(
                 session,
                 flags['model'],
@@ -106,11 +106,23 @@ def construct_model_with_flags(session, flags, load_model_path=None, save_model_
                 ACTION_NAMES,
                 flags['cnn_filter_size'],
                 flags['cnn_num_filters'],
-                flags['load_model'],
+                load_model,
+                load_model_dir,
                 load_model_path,
                 flags['save_model'],
                 save_model_path
             )
+
+def load_flags(results_dir, load_model_dir):
+    loading_flags_files = [filename for filename in os.listdir(results_dir + "flags") if filename.startswith(load_model_dir + "_")]
+    print load_model_dir + "_"
+    if len(loading_flags_files) == 0:
+        print("Uh oh! Can't find flag file for model to load. Remember, should be ./results/flags/[load_model_dir name]_[timestamp]")
+        assert(0)
+    loading_flag_file = results_dir + "flags" + "/" + loading_flags_files[-1]
+    with open(loading_flag_file, 'r') as f:
+        model_flags = json.load(f)
+    return model_flags
 
 def get_model():
     # Reset every time
@@ -121,20 +133,20 @@ def get_model():
     session = tf.Session()
 
     # Construct relevant file names and paths for loading / saving models
-    load_model_dir, load_model_path = get_model_path(FLAGS.load_model_dir)
+    if (FLAGS.load_model):
+        load_model_dir, load_model_path = get_model_path(FLAGS.load_model_dir)
+    else:
+        load_model_dir, load_model_path = None, None
     save_model_dir, save_model_path = get_model_path(FLAGS.save_model_dir)
 
     # Get model flags
     if FLAGS.load_model:
-        loading_flags_files = [filename for filename in os.listdir(FLAGS.results_dir + "flags") if filename.startswith(FLAGS.load_model_dir + "_")]
-        loading_flag_file = FLAGS.results_dir + "flags" + "/" + loading_flags_files[-1]
-        with open(loading_flag_file, 'r') as f:
-            model_flags = json.load(f)
+        model_flags = load_flags(FLAGS.results_dir, FLAGS.load_model_dir)
     else:
         model_flags = FLAGS.__flags
 
     # Initialize a FoxNet model.
-    foxnet = construct_model_with_flags(session, model_flags, load_model_path, save_model_path)
+    foxnet = construct_model_with_flags(session, model_flags, FLAGS.load_model, load_model_dir, load_model_path, save_model_path)
 
     # Set up saver
     foxnet.saver = tf.train.Saver(max_to_keep = 3, keep_checkpoint_every_n_hours=4)
