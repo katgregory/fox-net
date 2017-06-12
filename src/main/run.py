@@ -47,7 +47,7 @@ tf.app.flags.DEFINE_float("health_weight", 10.0, "Amount to weight health reward
 
 # TARGET NETWORK
 tf.app.flags.DEFINE_bool("use_target_net", True, "")
-tf.app.flags.DEFINE_integer("target_q_update_freq", 10, "")
+tf.app.flags.DEFINE_integer("target_q_update_freq", 100, "")
 
 # INFRASTRUCTURE
 tf.app.flags.DEFINE_string("data_dir", "./data/data_053017/", "data directory (default ./data)")
