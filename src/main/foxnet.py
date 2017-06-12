@@ -98,8 +98,8 @@ class FoxNet(object):
         else:
             # Define loss
             onehot_labels = tf.one_hot(self.actions, self.num_actions)
-            action_probs = self.model.get_q_values_op(self.states)
-            total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=action_probs)
+            self.action_probs = self.model.get_q_values_op(self.states)
+            total_loss = tf.losses.softmax_cross_entropy(onehot_labels, logits=self.action_probs)
             self.loss = tf.reduce_mean(total_loss)
 
         # Regularization for all but biases
@@ -127,8 +127,8 @@ class FoxNet(object):
     def add_q_learning_loss_op(self, q, target_q, num_actions):
         target = self.rewards + self.gamma * tf.reduce_max(self.q_values_p, axis=1)
         action_mask = tf.one_hot(indices=self.actions, depth=self.num_actions)
-        prediction = tf.reduce_sum(self.q_values*action_mask, axis=1)
-        self.loss = tf.reduce_sum(tf.square((target - prediction)))
+        self.prediction = tf.reduce_sum(self.q_values*action_mask, axis=1)
+        self.loss = tf.reduce_sum(tf.square((target - self.prediction)))
 
     def update_target_params(self, session):
         session.run(self.update_target_op)
