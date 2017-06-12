@@ -37,7 +37,6 @@ def compute_saliency_maps(sess, s, a, r, sp, model):
     # Note: this is equivalent to scores[np.arange(N), y] we used in NumPy
     # for computing vectorized losses.
 
-    correct_scores = tf.gather_nd(model.q_values,
     correct_scores = tf.gather_nd(model.model.get_q_values_op(model.states),
                                   tf.stack((tf.range(s.shape[0]), tf.cast(model.actions, tf.int32)), axis=1))
 
