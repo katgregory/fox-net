@@ -38,6 +38,7 @@ def compute_saliency_maps(sess, s, a, r, sp, model):
     # for computing vectorized losses.
 
     correct_scores = tf.gather_nd(model.q_values,
+    correct_scores = tf.gather_nd(model.model.get_q_values_op(model.states),
                                   tf.stack((tf.range(s.shape[0]), tf.cast(model.actions, tf.int32)), axis=1))
 
     # Use the correct_scores to compute the loss
@@ -89,7 +90,7 @@ def show_saliency_maps(sess, model, s, a, r, s_p, count=5, num_trials=5):
 def get_data_params():
     return {
         "data_dir": './data/data_053017/',
-        "num_images": 1000,
+        "num_images": 100,
         "width": 64,
         "height": 48,
         "multi_frame_state": False,
@@ -110,6 +111,7 @@ def main(_):
     sess = tf.Session()
 
     flags = load_flags(results_dir, model_to_load)
+    flags['save_model'] = False
     foxnet = construct_model_with_flags(sess, flags, True, load_model_dir, load_model_path, "")
 
     sess.run(tf.global_variables_initializer())
