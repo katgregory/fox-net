@@ -1,8 +1,8 @@
 # FoxNet
 
-We explore a number of models and learning strategies for autonomous aircraft navigation and combat through the simplified environment of the Nintendo Star Fox 64 video game. Our primary model builds off DeepMind's 2015 DQN model. We first compare the performance of this model and three other neural architectures through an on-policy classification task, achieving up to 67\% validation accuracy with the DeepMind DQN model. We then improve these models with off-policy Deep Q-Learning, achieving end-of-game scores of up to 18 points.
+We explore a number of models and learning strategies for autonomous aircraft navigation and combat through the simplified environment of the Nintendo video game, Star Fox 64. Our primary model builds off DeepMind's 2015 DQN model. We first compare the performance of this model and three other neural architectures in an on-policy classification task, achieving up to 71\% validation accuracy with the DeepMind DQN model. We then improve these models with off-policy Deep Q-Learning. After 80,000 training iterations on Level 1, our best agent achieves an end-of-game score of 61 points, surpassing a random baseline's score of 12 but falling short of a human player's score of 115. We also demonstrate our agents' abilities to generalize game strategy to unseen levels. After 140,000 training iterations in ``Train Mode'', our best agent achieves an end-of-game score of 63 after only 10,000 additional training iterations on Level 1.
 
-A possible application of our system could be the control systems for an autonomous drone. In particular, training a drone agent in a simulated environment using the methods described in this paper could serve as an effective warm-start before training autonomous vehicles in the real world.
+For more details, please see our paper (foxnet_final_paper.pdf).
 
 
 ## Code
