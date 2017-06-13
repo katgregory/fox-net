@@ -401,8 +401,8 @@ def make_confusion_matrix(conf_arr, axes, results_dir, dt):
 
     width, height = conf_arr.shape
 
-    for x in xrange(width):
-        for y in xrange(height):
+    for x in np.arange(width):
+        for y in np.arange(height):
             ax.annotate(str(conf_arr[x][y]), xy=(y, x),
                         horizontalalignment='center',
                         verticalalignment='center')
